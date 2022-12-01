@@ -1,11 +1,9 @@
 {
   "asiaplustj.info": [
     "#topbanners",
-    ".newsbox-outer-banner",
-    "iframe",
     ".grv-dialog-host",
-    ".hidden-xs",
-    ".hidden-sm",
-    ".banner-b1"
-  ]
+    ".banner-b1",
+    ".newsbox-outer-banner"
+  ],
+  "24.kg": [".widget-last-news"]
 }
