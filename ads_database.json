@@ -1,3 +1,8 @@
 {
-  "asiaplustj.info": ["#topbanners", ".newsbox-outer-banner", "iframe"]
+  "asiaplustj.info": [
+    "#topbanners",
+    ".newsbox-outer-banner",
+    "iframe",
+    ".grv-dialog-host"
+  ]
 }
