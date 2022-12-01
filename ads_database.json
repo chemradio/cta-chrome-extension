@@ -3,6 +3,9 @@
     "#topbanners",
     ".newsbox-outer-banner",
     "iframe",
-    ".grv-dialog-host"
+    ".grv-dialog-host",
+    ".hidden-xs",
+    ".hidden-sm",
+    ".banner-b1"
   ]
 }
