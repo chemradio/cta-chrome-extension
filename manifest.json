@@ -1,37 +1,38 @@
 {
-  "name": "CTA-Extension",
-  "version": "0.1.0",
-  "description": "CTA-Extension",
-  "permissions": ["storage", "tabs"],
-  "host_permissions": ["https://*/*"],
-  "background": {
-    "service_worker": "background.js"
-  },
-  "content_scripts": [
-    {
-      "matches": ["https://*/*"],
-      "js": ["contentScript.js"]
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "assets/bookmark.png",
-        "assets/play.png",
-        "assets/delete.png",
-        "assets/save.png"
-      ],
-      "matches": ["https://*/*"]
-    }
-  ],
-  "action": {
-    "default_icon": {
-      "16": "assets/ext-icon.png",
-      "24": "assets/ext-icon.png",
-      "32": "assets/ext-icon.png"
-    },
-    "default_title": "CTA-Extension",
-    "default_popup": "popup.html"
-  },
-  "manifest_version": 3
+	"name": "CTA-Extension",
+	"version": "0.1.0",
+	"description": "CTA-Extension",
+	"permissions": ["storage", "tabs", "desktopCapture"],
+	"host_permissions": ["https://*/*"],
+	"background": {
+		"service_worker": "background.js"
+	},
+	"content_scripts": [
+		{
+			"matches": ["https://*/*"],
+			"js": ["contentScript.js"],
+			"run_at": "document_end"
+		}
+	],
+	"web_accessible_resources": [
+		{
+			"resources": [
+				"assets/bookmark.png",
+				"assets/play.png",
+				"assets/delete.png",
+				"assets/save.png"
+			],
+			"matches": ["https://*/*"]
+		}
+	],
+	"action": {
+		"default_icon": {
+			"16": "assets/ext-icon.png",
+			"24": "assets/ext-icon.png",
+			"32": "assets/ext-icon.png"
+		},
+		"default_title": "CTA-Extension",
+		"default_popup": "popup.html"
+	},
+	"manifest_version": 3
 }

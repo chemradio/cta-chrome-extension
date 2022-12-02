@@ -1,9 +1,11 @@
 {
-  "asiaplustj.info": [
-    "#topbanners",
-    ".grv-dialog-host",
-    ".banner-b1",
-    ".newsbox-outer-banner"
-  ],
-  "24.kg": [".widget-last-news"]
+	"asiaplustj.info": [
+		"#topbanners",
+		".grv-dialog-host",
+		".banner-b1",
+		".newsbox-outer-banner"
+	],
+	"24.kg": [".widget-last-news"],
+	"kaktus.media": [".bnr", ".bb-html"],
+	"www.rbc.ru": [".push-allow", ".fox-tail", ".live-tv", ".live-tv__main"]
 }
