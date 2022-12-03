@@ -1,7 +1,7 @@
 {
 	"name": "CTA-Extension",
 	"version": "0.1.0",
-	"description": "CTA-Extension",
+	"description": "A proprietary adblocker and screenshot engine (to be implemented).",
 	"permissions": ["storage", "tabs", "desktopCapture"],
 	"host_permissions": ["https://*/*"],
 	"background": {
@@ -27,9 +27,10 @@
 	],
 	"action": {
 		"default_icon": {
-			"16": "assets/ext-icon.png",
-			"24": "assets/ext-icon.png",
-			"32": "assets/ext-icon.png"
+			"16": "assets/ext-16-modified.png",
+			"32": "assets/ext-32-modified.png",
+			"48": "assets/ext-48-modified.png",
+			"128": "assets/ext-128-modified.png"
 		},
 		"default_title": "CTA-Extension",
 		"default_popup": "popup.html"
