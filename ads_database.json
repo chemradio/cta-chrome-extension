@@ -32,7 +32,7 @@
 	"www.washingtonpost.com": [
 		"#leaderboard-wrapper",
 		"#google_ads_top_frame",
-
+		"[id^='paywall-']",
 		"[aria-label='Advertisement']",
 		"[data-qa='article-body-ad']",
 		"[data-qa='softwall-expanded-body']"
