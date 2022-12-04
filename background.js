@@ -5,20 +5,18 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 		rtext = await response.text();
 		ad_database = JSON.parse(rtext);
 		hosts = Object.keys(ad_database);
+		ads = [];
+
 		tabHost = new URL(tab.url).host;
-		console.log(tabHost);
 		if (hosts.includes(tabHost)) {
 			if (ad_database[tabHost]) {
-				chrome.tabs.sendMessage(tabId, {
-					type: 'ready',
-					ads: ad_database[tabHost],
-				});
+				ads = ad_database[tabHost];
 			}
 		}
-	} else {
+
 		chrome.tabs.sendMessage(tabId, {
-			type: 'missing',
-			ads: null,
+			type: 'ready',
+			ads: ad_database['generic'].concat(ads),
 		});
 	}
 });

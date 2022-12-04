@@ -3,48 +3,21 @@ if (chrome.runtime) {
 		const { type, ads } = obj;
 		if (type === 'ready') {
 			removeAds(ads);
-		} else {
-			removeAds();
 		}
 	});
 }
 
 const removeAds = (dbAds) => {
-	if (dbAds) {
-		removeDbAds(dbAds);
+	if (!dbAds) {
+		console.log('no ads in database for this domain');
+		return;
 	}
-	const genericAds = [
-		// 'iframe'
-		"[data-testid='StandardAd']",
-		'.ad',
-		'#google_ads_top_frame',
-		"[aria-label='Advertisement']",
-		"div[id^='adfox_']",
-		'.adsbygoogle',
-		'#adv',
-		"div[id^='yandex_rtb_']",
-		'.cookie',
-		"div[class^='ad']",
-		"[id^='google_ads']",
-	];
-	removeGenericAds(genericAds);
+	removeDbAds(dbAds);
 	removeScripts();
 };
 
 const removeDbAds = (dbAds) => {
 	for (const ad of dbAds) {
-		let elements = document.querySelectorAll(ad);
-		if (!elements) {
-			continue;
-		}
-		for (const element of elements) {
-			element.parentElement.removeChild(element);
-		}
-	}
-};
-
-const removeGenericAds = (genericAds) => {
-	for (const ad of genericAds) {
 		let elements = document.querySelectorAll(ad);
 		if (!elements) {
 			continue;

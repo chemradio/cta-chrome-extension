@@ -1,4 +1,17 @@
 {
+	"generic": [
+		"[data-testid='StandardAd']",
+		".ad",
+		"#google_ads_top_frame",
+		"[aria-label='Advertisement']",
+		"div[id^='adfox_']",
+		".adsbygoogle",
+		"#adv",
+		"div[id^='yandex_rtb_']",
+		".cookie",
+		"div[class^='ad']",
+		"[id^='google_ads']"
+	],
 	"asiaplustj.info": [
 		"#topbanners",
 		".grv-dialog-host",
@@ -59,7 +72,6 @@
 		"div[id^='adfox_']"
 	],
 	"www.uralskweek.kz": [
-		".adsbygoogle",
 		"top_banner1",
 		"[id^='adfox_']",
 		".bannersh",
