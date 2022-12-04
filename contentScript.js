@@ -1,32 +1,33 @@
-chrome.runtime.onMessage.addListener((obj, sender, response) => {
-	const { type, ads } = obj;
-	if (type === 'ready') {
-		removeAds(ads);
-	} else {
-		removeAds();
-	}
-});
+if (chrome.runtime) {
+	chrome.runtime.onMessage.addListener((obj, sender, response) => {
+		const { type, ads } = obj;
+		if (type === 'ready') {
+			removeAds(ads);
+		} else {
+			removeAds();
+		}
+	});
+}
 
-const genericAds = [
-	// 'iframe'
-	"[data-testid='StandardAd']",
-	'.ad',
-	'#google_ads_top_frame',
-	"[aria-label='Advertisement']",
-	"div[id^='adfox_']",
-	'.adsbygoogle',
-	'#adv',
-	"div[id^='yandex_rtb_']",
-	'.cookie',
-	"div[class^='ad']",
-	"[id^='google_ads']",
-];
-
-const removeAds = (dbAds = []) => {
+const removeAds = (dbAds) => {
 	if (dbAds) {
 		removeDbAds(dbAds);
 	}
-	removeGenericAds();
+	const genericAds = [
+		// 'iframe'
+		"[data-testid='StandardAd']",
+		'.ad',
+		'#google_ads_top_frame',
+		"[aria-label='Advertisement']",
+		"div[id^='adfox_']",
+		'.adsbygoogle',
+		'#adv',
+		"div[id^='yandex_rtb_']",
+		'.cookie',
+		"div[class^='ad']",
+		"[id^='google_ads']",
+	];
+	removeGenericAds(genericAds);
 	removeScripts();
 };
 
@@ -42,7 +43,7 @@ const removeDbAds = (dbAds) => {
 	}
 };
 
-const removeGenericAds = () => {
+const removeGenericAds = (genericAds) => {
 	for (const ad of genericAds) {
 		let elements = document.querySelectorAll(ad);
 		if (!elements) {
