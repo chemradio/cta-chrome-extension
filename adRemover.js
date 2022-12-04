@@ -1,12 +1,3 @@
-chrome.runtime.onMessage.addListener((obj, sender, response) => {
-	const { type, ads } = obj;
-	if (type === 'ready') {
-		removeAds(ads);
-	} else {
-		removeAds();
-	}
-});
-
 const genericAds = [
 	// 'iframe'
 	"[data-testid='StandardAd']",
@@ -22,7 +13,7 @@ const genericAds = [
 	"[id^='google_ads']",
 ];
 
-const removeAds = (dbAds = []) => {
+export const removeAds = (dbAds = []) => {
 	if (dbAds) {
 		removeDbAds(dbAds);
 	}
