@@ -33,6 +33,7 @@
 		"#leaderboard-wrapper",
 		"#google_ads_top_frame",
 		"[id^='paywall-']",
+		".paywall-overlay",
 		"[aria-label='Advertisement']",
 		"[data-qa='article-body-ad']",
 		"[data-qa='softwall-expanded-body']"
