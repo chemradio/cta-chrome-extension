@@ -16,5 +16,9 @@
         },
         "default_title": "Click me",
         "default_popup": "popup.html"
+    },
+    "options_page": "options.html",
+    "background": {
+        "service_worker": "background.js"
     }
 }
