@@ -1,39 +1,20 @@
 {
-	"name": "CTA-Extension",
-	"version": "0.1.0",
-	"description": "A proprietary adblocker and screenshot engine (to be implemented).",
-	"permissions": ["storage", "tabs", "desktopCapture"],
-	"host_permissions": ["https://*/*"],
-	"background": {
-		"service_worker": "background.js"
-	},
-	"content_scripts": [
-		{
-			"matches": ["https://*/*"],
-			"js": ["contentScript.js"],
-			"run_at": "document_end"
-		}
-	],
-	"web_accessible_resources": [
-		{
-			"resources": [
-				"assets/bookmark.png",
-				"assets/play.png",
-				"assets/delete.png",
-				"assets/save.png"
-			],
-			"matches": ["https://*/*"]
-		}
-	],
-	"action": {
-		"default_icon": {
-			"16": "assets/ext-16-modified.png",
-			"32": "assets/ext-32-modified.png",
-			"48": "assets/ext-48-modified.png",
-			"128": "assets/ext-128-modified.png"
-		},
-		"default_title": "CTA-Extension",
-		"default_popup": "popup.html"
-	},
-	"manifest_version": 3
+    "manifest_version": 3,
+    "name": "My Extension",
+    "version": "0.0.1",
+    "description": "My Extension for Hello World",
+    "icons": {
+        "16": "icon.png",
+        "48": "icon.png",
+        "128": "icon.png"
+    },
+    "action": {
+        "default_icon": {
+            "16": "icon.png",
+            "48": "icon.png",
+            "128": "icon.png"
+        },
+        "default_title": "Click me",
+        "default_popup": "popup.html"
+    }
 }
