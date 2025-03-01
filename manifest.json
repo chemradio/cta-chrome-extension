@@ -25,6 +25,16 @@
         {
             "matches": ["https://*.google.com/*"],
             "js": ["contentScript.js"]
+        },
+        {
+            "matches": ["<all_urls>"],
+            "css": ["contentStyle.css"],
+            "js": ["contentScript.js"],
+            "exclude": ["*://*/*business*"]
         }
-    ]
+    ],
+    "permissions": ["storage"],
+    "chrome_url_overrides": {
+        "newtab": "myPage.html"
+    }
 }
