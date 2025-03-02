@@ -29,7 +29,6 @@
         },
         {
             "matches": ["<all_urls>"],
-            "css": ["contentStyle.css"],
             "js": ["contentScript.js"],
             "exclude": ["*://*/*business*"]
         }

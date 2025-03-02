@@ -1,12 +1,12 @@
-export function enableEmulation(tabId, x, y, scaleFactor) {
+export function enableEmulation(tabId, emulationProps) {
     console.log("Enabling emulation.");
     chrome.debugger.sendCommand(
         { tabId: tabId },
         "Emulation.setDeviceMetricsOverride",
         {
-            width: x,
-            height: y,
-            deviceScaleFactor: scaleFactor,
+            width: emulationProps.width,
+            height: emulationProps.height,
+            deviceScaleFactor: emulationProps.scaleFactor,
             mobile: false,
         },
         () => {}
