@@ -19,7 +19,8 @@
     },
     "options_page": "options.html",
     "background": {
-        "service_worker": "background.js"
+        "service_worker": "background.js",
+        "type": "module"
     },
     "content_scripts": [
         {
@@ -33,7 +34,7 @@
             "exclude": ["*://*/*business*"]
         }
     ],
-    "permissions": ["storage"],
+    "permissions": ["contextMenus", "debugger", "tabs", "downloads"],
     "chrome_url_overrides": {
         "newtab": "myPage.html"
     }
