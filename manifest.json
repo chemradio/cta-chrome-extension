@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "My Extension",
+    "name": "CTA Helper",
     "version": "0.0.1",
-    "description": "My Extension for Hello World",
+    "description": "CTA Helper",
     "icons": {
         "16": "icon.png",
         "48": "icon.png",
@@ -24,17 +24,19 @@
     },
     "content_scripts": [
         {
-            "matches": ["https://*.google.com/*"],
-            "js": ["contentScript.js"]
-        },
-        {
             "matches": ["<all_urls>"],
             "js": ["contentScript.js"],
             "exclude": ["*://*/*business*"]
         }
     ],
-    "permissions": ["contextMenus", "debugger", "tabs", "downloads"],
-    "chrome_url_overrides": {
-        "newtab": "myPage.html"
-    }
+    "permissions": [
+        "contextMenus",
+        "debugger",
+        "downloads",
+        "activeTab",
+        "tabs",
+        "scripting"
+    ],
+
+    "host_permissions": ["http://*/*", "https://*/*"]
 }
