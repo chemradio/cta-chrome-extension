@@ -2,6 +2,11 @@ import { emulateAndCapture } from "./workers/screenshot/emulatedScreenshot.js";
 import { emulationOptions } from "./workers/screenshot/emultaionOptions.js";
 
 chrome.runtime.onInstalled.addListener(() => {
+    chrome.contextMenus.create({
+        id: "elmentScreenshot",
+        title: "Element Screenshot",
+        contexts: ["all"],
+    });
     for (const [emulationName, _] of Object.entries(emulationOptions)) {
         chrome.contextMenus.create({
             id: emulationName,
@@ -15,6 +20,15 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     // parse tab domain name like "facebook", "google", "youtube"
 
     if (info.menuItemId && tab.id) {
+        // element screenshot
+        if (info.menuItemId === "elmentScreenshot") {
+            chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                files: ["content.js"],
+            });
+            return;
+        }
+        // full page screenshot
         console.log(`Emulating ${info.menuItemId} on tab ${tab.id}`);
         console.log(emulationOptions[info.menuItemId]);
         emulateAndCapture(tab.id, emulationOptions[info.menuItemId]);
@@ -55,18 +69,24 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     // });
 });
 
-async function moveToFirstPosition(activeInfo) {
-    try {
-        await chrome.tabs.move(activeInfo.tabId, { index: 0 });
-        console.log("Success.");
-    } catch (error) {
-        if (
-            error ==
-            "Error: Tabs cannot be edited right now (user may be dragging a tab)."
-        ) {
-            setTimeout(() => moveToFirstPosition(activeInfo), 50);
-        } else {
-            console.error(error);
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === "CAPTURE_ELEMENT") {
+        const tabId = sender.tab.id;
+        const rect = message.rect;
+
+        if (!rect) {
+            console.error("No element rect found!");
+            return;
         }
+        const emulationOpts = emulationOptions["Vertical 7k x2"];
+        emulateAndCapture(tabId, emulationOpts, {
+            x: rect.x * emulationOpts.scaleFactor,
+            y: rect.y * emulationOpts.scaleFactor,
+            width: rect.width * emulationOpts.scaleFactor,
+            height: rect.height * emulationOpts.scaleFactor,
+            scale: 1,
+        });
+
+        sendResponse({ status: "screenshot triggered" });
     }
-}
+});

@@ -1,7 +1,7 @@
 import { enableEmulation, disableEmulation } from "./helpers/emulation.js";
 import { captureScreenshot } from "./helpers/capture_download.js";
 
-export function emulateAndCapture(tabId, emulationProps) {
+export function emulateAndCapture(tabId, emulationProps, clipOptions = {}) {
     chrome.debugger.attach({ tabId: tabId }, "1.3", () => {
         enableEmulation(tabId, emulationProps);
 
@@ -9,7 +9,7 @@ export function emulateAndCapture(tabId, emulationProps) {
 
         setTimeout(() => {
             console.log("starting capture");
-            captureScreenshot(tabId, "node_screenshot");
+            captureScreenshot(tabId, "node_screenshot", clipOptions);
             setTimeout(() => {
                 console.log("disabling emulation");
 

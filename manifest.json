@@ -22,13 +22,7 @@
         "service_worker": "background.js",
         "type": "module"
     },
-    "content_scripts": [
-        {
-            "matches": ["<all_urls>"],
-            "js": ["contentScript.js"],
-            "exclude": ["*://*/*business*"]
-        }
-    ],
+
     "permissions": [
         "contextMenus",
         "debugger",
