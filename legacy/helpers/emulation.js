@@ -11,6 +11,11 @@ export function enableEmulation(tabId, emulationProps) {
         },
         () => {}
     );
+    chrome.scripting.executeScript({
+        target: { tabId: yourTabId },
+        files: ["mutationWatcher.js"], // This contains your MutationObserver logic
+    });
+
     console.log("Emulation enabled.");
 }
 

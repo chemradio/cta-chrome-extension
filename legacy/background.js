@@ -79,14 +79,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
         }
         const emulationOpts = emulationOptions["Vertical 7k x2"];
-        emulateAndCapture(tabId, emulationOpts, {
-            x: rect.x * emulationOpts.scaleFactor,
-            y: rect.y * emulationOpts.scaleFactor,
-            width: rect.width * emulationOpts.scaleFactor,
-            height: rect.height * emulationOpts.scaleFactor,
-            scale: 1,
-        });
+        emulateAndCapture(
+            tabId,
+            emulationOpts
+            //      {
+            //     x: rect.x * emulationOpts.scaleFactor,
+            //     y: rect.y * emulationOpts.scaleFactor,
+            //     width: rect.width * emulationOpts.scaleFactor,
+            //     height: rect.height * emulationOpts.scaleFactor,
+            //     scale: 1,
+            // }
+        );
 
         sendResponse({ status: "screenshot triggered" });
+    }
+});
+
+chrome.runtime.onMessage.addListener((message, sender) => {
+    if (message.type === "MUTATIONS_FINISHED") {
+        const tabId = sender.tab.id;
+
+        console.log("Mutations finished, taking screenshot...");
+
+        captureScreenshot(tabId, "emulated-device-screenshot");
     }
 });
