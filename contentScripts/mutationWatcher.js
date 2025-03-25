@@ -1,5 +1,5 @@
 let mutationTimeout;
-const debounceDelay = 500;
+const debounceDelay = 1500;
 
 const observer = new MutationObserver(() => {
     clearTimeout(mutationTimeout);

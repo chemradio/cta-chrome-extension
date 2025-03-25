@@ -1,15 +1,15 @@
-export function injectMutationWatcher(tabId) {
+export const injectMutationWatcher = (tabId) => {
     return chrome.scripting
         .executeScript({
             target: { tabId },
-            files: ["mutation-watcher.js"],
+            files: ["contentScripts/mutationWatcher.js"],
         })
         .then(() => {
             console.log("Mutation observer injected on tab:", tabId);
         });
-}
+};
 
-export function waitForMutationSettle() {
+export const waitForMutationSettle = () => {
     return new Promise((resolve) => {
         const listener = (message, sender) => {
             if (message.type === "MUTATIONS_FINISHED") {
@@ -19,4 +19,4 @@ export function waitForMutationSettle() {
         };
         chrome.runtime.onMessage.addListener(listener);
     });
-}
+};

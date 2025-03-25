@@ -1,6 +1,6 @@
-import { emulationOptions } from "../config/emulationOptions";
+import { emulationOptions } from "../screenshots/emulation/emulationOptions.js";
 
-export const createContextMenus = () => {
+export function createContextMenus() {
     chrome.contextMenus.create({
         id: "elmentScreenshot",
         title: "Element Screenshot",
@@ -14,4 +14,4 @@ export const createContextMenus = () => {
             contexts: ["all"],
         });
     }
-};
+}

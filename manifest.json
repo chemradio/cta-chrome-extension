@@ -14,15 +14,12 @@
             "48": "icon.png",
             "128": "icon.png"
         },
-        "default_title": "Click me",
-        "default_popup": "popup.html"
+        "default_title": "CTA Helper"
     },
-    "options_page": "options.html",
     "background": {
-        "service_worker": "background.js",
+        "service_worker": "backgroundScript.js",
         "type": "module"
     },
-
     "permissions": [
         "contextMenus",
         "debugger",
@@ -31,6 +28,5 @@
         "tabs",
         "scripting"
     ],
-
     "host_permissions": ["http://*/*", "https://*/*"]
 }
