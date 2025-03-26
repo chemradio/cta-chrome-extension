@@ -3,9 +3,10 @@ import {
     detachDebugger,
 } from "../support/debugerAttachment.js";
 import { enableEmulation } from "./emulation/emulationEnabler.js";
-import // injectMutationWatcher,
-// waitForMutationSettle,
-"../support/mutationObserver.js";
+import {
+    injectMutationWatcher,
+    waitForMutationSettle,
+} from "../support/mutationObserver.js";
 // import { takeScreenshotClip } from "./capture/captureScreenshot";
 // import { downloadScreenshot } from "./capture/downloadScreenshot";
 
