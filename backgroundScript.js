@@ -1,9 +1,9 @@
 import { greeting } from "./temp.js";
 import { createContextMenus } from "./contextMenus/createContextMenus.js";
-// import { addContextMenusListener } from "./contextMenus/contextMenuListener.js";
+import { addContextMenusListener } from "./contextMenus/contextMenuListener.js";
 
-// createContextMenus();
-// addContextMenusListener();
+createContextMenus();
+addContextMenusListener();
 
 chrome.runtime.onInstalled.addListener(() => {
     console.log(greeting);
