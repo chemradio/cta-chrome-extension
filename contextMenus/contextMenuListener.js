@@ -3,7 +3,8 @@ import { emulateAndCapture } from "../screenshots/emulatedScreenshotCapture.js";
 export const addContextMenusListener = async () => {
     chrome.contextMenus.onClicked.addListener((info, tab) => {
         console.log("click");
-        //     console.log("context menu triggered");
+        console.log("context menu triggered");
+        emulateAndCapture(tab.id).then(() => console.log("OK"));
         //     emulateAndCapture(tab.id)
         //         .then(() => console.log("Capture complete"))
         //         .catch((error) => console.error("Error capturing:", error));
