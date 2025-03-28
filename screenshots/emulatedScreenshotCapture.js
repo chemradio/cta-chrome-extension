@@ -11,6 +11,7 @@ import { takeScreenshotClip } from "./capture/captureScreenshot.js";
 import { downloadScreenshot } from "./capture/downloadScreenshot.js";
 
 export const emulateAndCapture = async (tabId) => {
+    return;
     try {
         console.log("emulate and capture");
         await attachDebugger(tabId);

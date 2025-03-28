@@ -14,7 +14,8 @@
             "48": "icon.png",
             "128": "icon.png"
         },
-        "default_title": "CTA Helper"
+        "default_title": "CTA Helper",
+        "default_popup": "popup.html"
     },
     "background": {
         "service_worker": "backgroundScript.js",
@@ -28,5 +29,9 @@
         "tabs",
         "scripting"
     ],
-    "host_permissions": ["http://*/*", "https://*/*"]
+    "host_permissions": ["http://*/*", "https://*/*"],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self';",
+        "sandbox": "sandbox allow-scripts allow-forms allow-popups allow-modals; script-src 'self' 'unsafe-inline' 'unsafe-eval'; child-src 'self';"
+    }
 }

@@ -4,6 +4,12 @@ export const addContextMenusListener = async () => {
     chrome.contextMenus.onClicked.addListener((info, tab) => {
         console.log("click");
         console.log("context menu triggered");
+        console.log(info);
+        const contextMenudId = info.menuItemId;
+        const pageUrl = info.pageUrl;
+
+        console.log(contextMenudId);
+        console.log(pageUrl);
         emulateAndCapture(tab.id).then(() => console.log("OK"));
         //     emulateAndCapture(tab.id)
         //         .then(() => console.log("Capture complete"))
