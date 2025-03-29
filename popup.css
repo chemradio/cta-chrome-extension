@@ -1,0 +1,223 @@
+:root {
+  --primary: #2D1996;    /* Header background */
+  --white: #FFFFFF;      /* Header text */
+  --accent: #0ECAE3;     /* Cyan for buttons/slider */
+  --dark: #102C44;       /* Text color */
+  --highlight: #FF0055;  /* Reddish for Custom */
+  --light-bg: #DEE5EC;   /* Main background */
+}
+
+body {
+  background: var(--light-bg);
+  font-family: 'Roboto Condensed', sans-serif; /* Applied globally */
+  margin: 0;
+  padding: 0;
+}
+
+.popup {
+  width: 320px;
+  background: var(--light-bg);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  font-size: 18px;
+  font-weight: 700; /* Bold variant of Roboto Condensed */
+  color: var(--white);
+  background: var(--dark);
+  margin: 0;
+  padding: 12px 16px;
+}
+
+.section {
+  margin: 16px;
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  font-weight: 400; /* Regular weight */
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+#scaleFactorLabel{
+  margin-top: 4px;
+}
+/* Layout Buttons */
+.layout-options {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.scale-factor {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  text-align: center;
+  justify-content: center;
+}
+
+.layout-options input[type="radio"] {
+  display: none;
+}
+.scale-factor input[type="radio"] {
+  display: none;
+}
+
+.layout-btn {
+  flex: 1;
+  padding: 6px 0;
+  /* border: 2px solid var(--primary); */
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+  color: var(--primary);
+  background: var(--white);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.layout-options input[type="radio"]:checked + .layout-btn {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.scale-factor input[type="radio"]:checked + .layout-btn {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.layout-btn:hover {
+  background: var(--accent);
+  color: var(--dark);
+}
+
+/* Custom Button Styling */
+.custom-btn {
+  border-color: var(--highlight);
+  color: var(--highlight);
+}
+
+.layout-options input[type="radio"]:checked + .custom-btn {
+  background: var(--highlight);
+  color: var(--white);
+}
+
+.custom-btn:hover {
+  background: var(--highlight);
+  color: var(--dark);
+}
+
+/* Resolution */
+.resolution {
+  display: flex;
+  gap: 8px;
+}
+
+input[type="number"] {
+  width: 50%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--dark);
+  box-sizing: border-box;
+}
+
+input[type="number"]:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 4px var(--accent);
+}
+
+input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  background: white;
+  accent-color: var(--accent);
+}
+
+
+
+
+
+#scale-value {
+  color: var(--dark);
+  font-weight: 700; /* Bold for emphasis */
+}
+
+input[type="checkbox"] {
+  margin-right: 8px;
+  accent-color: var(--accent);
+}
+
+.buttons {
+  display: block;
+  padding: 5px;
+  
+}
+.capture-button{
+  width:100%;
+}
+
+button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.inner-or {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+
+}
+
+hr {
+  border: 0;
+  border-top: 1px dotted var(--dark);
+  margin-left:100px;
+  margin-right:100px;
+
+}
+#capture-page {
+  background: var(--white);
+  color: var(--dark);
+  border: 2px solid var(--accent);
+  
+
+}
+
+#capture-page:hover {
+  background: var(--accent);
+  color: var(--dark);
+}
+
+
+#capture-page:active {
+  background: var(--dark);
+  color: var(--accent);
+}
+
+
+#capture-element {
+  background: var(--white);
+  color: var(--dark);
+  border: 2px dashed var(--accent);
+}
+
+#capture-element:hover {
+  background: var(--accent);
+  color: var(--dark);
+}
+
+#capture-element:active {
+  background: var(--dark);
+  color: var(--accent);
+}
