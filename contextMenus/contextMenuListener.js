@@ -1,4 +1,4 @@
-import { emulateAndCapture } from "../screenshots/emulatedScreenshotCapture.js";
+import { emulateCaptureViewport } from "../screenshots/emulatedViewportCapture.js";
 
 export const addContextMenusListener = async () => {
     chrome.contextMenus.onClicked.addListener((info, tab) => {
@@ -10,7 +10,7 @@ export const addContextMenusListener = async () => {
 
         console.log(contextMenudId);
         console.log(pageUrl);
-        emulateAndCapture(tab.id).then(() => console.log("OK"));
+        emulateCaptureViewport(tab.id).then(() => console.log("OK"));
         //     emulateAndCapture(tab.id)
         //         .then(() => console.log("Capture complete"))
         //         .catch((error) => console.error("Error capturing:", error));

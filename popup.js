@@ -5,6 +5,7 @@ const scaleSlider = document.getElementById("scale");
 const scaleValue = document.getElementById("scale-value");
 const capturePageBtn = document.getElementById("capture-page");
 const captureElementBtn = document.getElementById("capture-element");
+const manualCleanupBtn = document.getElementById("manual-cleanup");
 
 // Preset resolutions
 const presets = {
@@ -87,6 +88,16 @@ captureElementBtn.addEventListener("click", () => {
         });
 });
 
+manualCleanupBtn.addEventListener("click", () => {
+    sendMessageToBackground({ action: "manualCleanup" })
+        .then((response) => {
+            console.log("Response from background:", response);
+        })
+        .catch((error) => {
+            console.error("Error sending message to background:", error);
+        });
+});
+
 // Gather settings
 function getSettings() {
     const selectedLayout = document.querySelector(
@@ -96,14 +107,15 @@ function getSettings() {
     const scales = document.getElementsByName("scale");
     for (const s of scales) {
         if (s.checked) {
-            scaleValue = Number(s.value);
+            scaleValue = s.value;
             break;
         }
     }
     const output = {
         layout: selectedLayout,
-        resolution: `${widthInput.value}x${heightInput.value}`,
-        scale: scaleValue,
+        width: parseInt(widthInput.value),
+        height: parseInt(heightInput.value),
+        deviceScaleFactor: parseInt(scaleValue.value),
         cleanup: document.getElementById("cleanup").checked,
     };
     return output;
