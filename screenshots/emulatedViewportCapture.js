@@ -10,7 +10,15 @@ import {
 import { takeScreenshotClip } from "./capture/captureScreenshot.js";
 import { downloadScreenshot } from "./capture/downloadScreenshot.js";
 
-export const emulateCaptureViewport = async (tabId, deviceMetrics = {}) => {
+export const emulateCaptureViewport = async (
+    tabId,
+    deviceMetrics = {
+        width: 1920,
+        height: 1080,
+        deviceScaleFactor: 1,
+        mobile: false,
+    }
+) => {
     // return;
     try {
         console.log("emulate and capture");

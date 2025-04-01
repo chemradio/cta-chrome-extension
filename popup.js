@@ -103,6 +103,7 @@ function getSettings() {
     const selectedLayout = document.querySelector(
         'input[name="layout"]:checked'
     ).value;
+
     let scaleValue;
     const scales = document.getElementsByName("scale");
     for (const s of scales) {
@@ -115,7 +116,7 @@ function getSettings() {
         layout: selectedLayout,
         width: parseInt(widthInput.value),
         height: parseInt(heightInput.value),
-        deviceScaleFactor: parseInt(scaleValue.value),
+        deviceScaleFactor: parseInt(scaleValue),
         cleanup: document.getElementById("cleanup").checked,
     };
     return output;

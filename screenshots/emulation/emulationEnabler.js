@@ -1,4 +1,4 @@
-export function enableEmulation(tabId, deviceMetrics = {}) {
+export function enableEmulation(tabId, deviceMetrics) {
     return new Promise((resolve, reject) => {
         chrome.debugger.sendCommand(
             { tabId },
