@@ -1,7 +1,9 @@
 import { createContextMenus } from "./contextMenus/createContextMenus.js";
 import { addContextMenusListener } from "./contextMenus/contextMenuListener.js";
 import { emulateCaptureViewport } from "./screenshots/emulatedViewportCapture.js";
+import { addElementClickedListener } from "./screenshots/elementSelect/elementClickListener.js";
 
+addElementClickedListener();
 createContextMenus();
 addContextMenusListener();
 
@@ -22,29 +24,39 @@ async function getActiveTab() {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log("Received message:", request);
-    console.log("Sender:", sender);
+    // console.log("Received message:", request);
+    // console.log("Sender:", sender);
 
     (async () => {
         try {
             const targetTab = await getActiveTab();
-            console.log("Target tab:", targetTab);
-            console.log("URL:", targetTab.url);
-            console.log("Tab ID:", targetTab.id);
+            const deviceMetrics = {
+                width: request.settings.width || 1920,
+                height: request.settings.height || 1080,
+                deviceScaleFactor: request.settings.deviceScaleFactor || 1,
+                mobile: request.settings.mobile || false,
+            };
 
             switch (request.action) {
                 case "capturePage":
-                    const deviceMetrics = {
-                        width: request.settings.width || 1920,
-                        height: request.settings.height || 1080,
-                        deviceScaleFactor:
-                            request.settings.deviceScaleFactor || 1,
-                        mobile: request.settings.mobile || false,
-                    };
                     await emulateCaptureViewport(targetTab.id, deviceMetrics);
                     break;
                 case "captureElement":
-                    console.log("Capture Element action received.");
+                    // inject the content script to capture a specific element
+                    chrome.scripting
+                        .executeScript({
+                            target: { tabId: targetTab.id },
+                            files: ["contentScripts/elementHighlighter.js"],
+                        })
+                        .then(() => {
+                            console.log("Element highlighter script injected.");
+                        })
+                        .then(() => {
+                            chrome.tabs.sendMessage(targetTab.id, {
+                                action: "sendDeviceMetrics",
+                                deviceMetrics,
+                            });
+                        });
                     break;
                 case "manualCleanup":
                     console.log("Manual Cleanup action received.");

@@ -19,7 +19,6 @@ export const emulateCaptureViewport = async (
         mobile: false,
     }
 ) => {
-    // return;
     try {
         console.log("emulate and capture");
         console.log("Attaching debugger...");

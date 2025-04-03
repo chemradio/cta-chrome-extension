@@ -1,3 +1,10 @@
+let deviceMetrics;
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "sendDeviceMetrics") {
+        deviceMetrics = message.deviceMetrics;
+    }
+});
+
 const style = document.createElement("style");
 style.textContent = `
   @keyframes glowingBorder {
@@ -6,7 +13,7 @@ style.textContent = `
     100% { box-shadow: 0 0 5px 2px  #0ECAE3; }
   }
   .animated-highlight {
-    outline: 2px solid red !important;
+    outline: 2px solid #0ECAE3 !important;
     animation: glowingBorder 1s infinite;
   }
 `;
@@ -39,6 +46,26 @@ function getXPath(element) {
             ix++;
         }
     }
+}
+
+function getElementSignature(element) {
+    if (!element) return null;
+
+    return {
+        xpath: getXPath(element),
+        tag: element.tagName.toLowerCase(),
+        id: element.id || null,
+        classes: Array.from(element.classList),
+        dataAttrs: Object.fromEntries(
+            [...element.attributes]
+                .filter((attr) => attr.name.startsWith("data-"))
+                .map((attr) => [attr.name, attr.value])
+        ),
+        text: element.innerText?.trim().slice(0, 100), // First 100 chars
+        siblingsIndex: Array.from(element.parentNode?.children || []).indexOf(
+            element
+        ),
+    };
 }
 
 function getElementRect(xpath) {
@@ -91,18 +118,15 @@ function handleClick(e) {
     e.preventDefault();
     e.stopPropagation();
     highlight(currentElement);
-
-    const xpath = getXPath(currentElement);
-    const rect = getElementRect(xpath);
-
-    alert(xpath);
-    alert(rect);
-    chrome.runtime.sendMessage({
-        type: "CAPTURE_ELEMENT",
-        xpath: xpath,
-        rect: rect,
-    });
-    cleanup();
+    const elementSignature = getElementSignature(currentElement);
+    const m = {
+        action: "elementClicked",
+        elementSignature: elementSignature,
+        deviceMetrics: deviceMetrics,
+    };
+    alert("sending message: " + JSON.stringify(m));
+    chrome.runtime.sendMessage(m);
+    location.reload();
 }
 
 function cleanup() {
