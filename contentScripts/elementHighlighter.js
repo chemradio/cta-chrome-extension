@@ -2,6 +2,12 @@ let deviceMetrics;
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "sendDeviceMetrics") {
         deviceMetrics = message.deviceMetrics;
+    } else {
+        alert("Different message");
+        console.log(
+            "Unknown action received in content script:",
+            message.action
+        );
     }
 });
 
@@ -18,6 +24,53 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+function findElementBySignature(signature) {
+    if (!signature) return null;
+
+    if (signature.id) {
+        let el = document.getElementById(signature.id);
+        if (el) return el;
+    }
+
+    if (signature.xpath) {
+        let result = document.evaluate(
+            signature.xpath,
+            document,
+            null,
+            XPathResult.FIRST_ORDERED_NODE_TYPE,
+            null
+        );
+        if (result.singleNodeValue) return result.singleNodeValue;
+    }
+
+    // Fallback search using other attributes
+    let candidates = [...document.querySelectorAll(signature.tag)];
+    candidates = candidates.filter((el) =>
+        signature.classes.every((cls) => el.classList.contains(cls))
+    );
+    candidates = candidates.filter((el) =>
+        Object.entries(signature.dataAttrs).every(
+            ([key, value]) => el.getAttribute(key) === value
+        )
+    );
+
+    if (signature.text) {
+        candidates = candidates.filter((el) =>
+            el.innerText?.trim().includes(signature.text)
+        );
+    }
+
+    if (signature.siblingsIndex !== undefined && signature.siblingsIndex >= 0) {
+        candidates = candidates.filter(
+            (el) =>
+                Array.from(el.parentNode?.children || []).indexOf(el) ===
+                signature.siblingsIndex
+        );
+    }
+
+    return candidates.length > 0 ? candidates[0] : null;
+}
 
 function getXPath(element) {
     if (element.id) {
@@ -68,7 +121,7 @@ function getElementSignature(element) {
     };
 }
 
-function getElementRect(xpath) {
+function getElementRectByXpath(xpath) {
     const el = document.evaluate(
         xpath,
         document,
@@ -86,6 +139,18 @@ function getElementRect(xpath) {
         width: rect.width,
         height: rect.height,
     };
+}
+
+function getElementRect(element) {
+    if (!element) return null;
+    const rect = element.getBoundingClientRect();
+    const elementRect = {
+        x: rect.left + window.scrollX,
+        y: rect.top + window.scrollY,
+        width: rect.width,
+        height: rect.height,
+    };
+    return elementRect;
 }
 
 let currentElement = null;
@@ -124,9 +189,32 @@ function handleClick(e) {
         elementSignature: elementSignature,
         deviceMetrics: deviceMetrics,
     };
-    alert("sending message: " + JSON.stringify(m));
-    chrome.runtime.sendMessage(m);
-    location.reload();
+    cleanup();
+    // alert("sending message: " + JSON.stringify(m));
+
+    chrome.runtime.sendMessage(m, (response) => {
+        if (response?.action === "getElementRect") {
+            console.log(
+                "Got elementSignature back:",
+                response.elementSignature
+            );
+            const targetElement = findElementBySignature(
+                response.elementSignature
+            );
+            console.log("Target element found:", targetElement);
+            // scroll el to view
+            targetElement.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+            const elementRect = getElementRect(targetElement);
+            console.log("Element rect:", elementRect);
+            chrome.runtime.sendMessage({
+                action: "captureCropScreenshot",
+                cropRect: elementRect,
+            });
+        }
+    });
 }
 
 function cleanup() {
