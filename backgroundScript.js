@@ -62,10 +62,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     console.log("Manual Cleanup action received.");
                     break;
                 default:
-                    console.log(`Unknown action: ${request.action}`);
+                    console.log(
+                        `Unknown action in main bg script: ${request.action}`
+                    );
             }
         } catch (error) {
-            console.error("Error fetching active tab:", error);
+            console.log(
+                "Error fetching active tab, probably another listener took care:",
+                error
+            );
         }
     })();
 

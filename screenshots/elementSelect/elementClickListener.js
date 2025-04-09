@@ -46,6 +46,7 @@ export const addElementClickedListener = () => {
             console.log(request.cropRect);
             (async () => {
                 // await new Promise((resolve) => setTimeout(resolve, 5000));
+                console.log("Taking screenshot...");
                 const screenshot = await takeScreenshotClip(
                     sender.tab.id,
                     request.cropRect

@@ -24,6 +24,7 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+document.body.style.zoom = "100%";
 
 function findElementBySignature(signature) {
     if (!signature) return null;
@@ -145,10 +146,11 @@ function getElementRect(element) {
     if (!element) return null;
     const rect = element.getBoundingClientRect();
     const elementRect = {
-        x: rect.left + window.scrollX,
-        y: rect.top + window.scrollY,
+        x: rect.left, //+ window.scrollX,
+        y: rect.top, //+ window.scrollY,
         width: rect.width,
         height: rect.height,
+        // devicePixelRatio: window.devicePixelRatio,
     };
     return elementRect;
 }
@@ -180,6 +182,9 @@ function wheelHandler(e) {
 }
 
 function handleClick(e) {
+    const currentZoomLevel = document.body.style.zoom;
+    document.body.style.zoom = "100%";
+
     e.preventDefault();
     e.stopPropagation();
     highlight(currentElement);
@@ -203,10 +208,10 @@ function handleClick(e) {
             );
             console.log("Target element found:", targetElement);
             // scroll el to view
-            targetElement.scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-            });
+            // targetElement.scrollIntoView({
+            //     behavior: "smooth",
+            //     block: "center",
+            // });
             const elementRect = getElementRect(targetElement);
             console.log("Element rect:", elementRect);
             chrome.runtime.sendMessage({
