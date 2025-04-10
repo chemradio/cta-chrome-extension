@@ -144,10 +144,11 @@ function getElementRectByXpath(xpath) {
 
 function getElementRect(element) {
     if (!element) return null;
+    element.scrollIntoView();
     const rect = element.getBoundingClientRect();
     const elementRect = {
-        x: rect.left, //+ window.scrollX,
-        y: rect.top, //+ window.scrollY,
+        x: rect.left + window.scrollX,
+        y: rect.top + window.scrollY,
         width: rect.width,
         height: rect.height,
         // devicePixelRatio: window.devicePixelRatio,
