@@ -32,7 +32,7 @@ function updateResolutionInputs() {
                 return;
             }
             widthInput.value = 1920;
-            heightInput.value = Math.min(response.pageHeight + 1, 9999);
+            heightInput.value = Math.min(response.pageHeight, 9999);
         });
     } else {
         widthInput.disabled = false;
