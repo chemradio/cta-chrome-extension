@@ -31,13 +31,40 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         try {
             const targetTab = await getActiveTab();
             const deviceMetrics = {
-                width: request.settings.width || 1920,
-                height: request.settings.height || 1080,
-                deviceScaleFactor: request.settings.deviceScaleFactor || 1,
-                mobile: request.settings.mobile || false,
+                width: request.settings?.width || 1920,
+                height: request.settings?.height || 1080,
+                deviceScaleFactor: request.settings?.deviceScaleFactor || 1,
+                mobile: request.settings?.mobile || false,
             };
 
             switch (request.action) {
+                case "getPageHeight":
+                    // Send a message to the content script to get the page height
+                    chrome.scripting.executeScript(
+                        {
+                            target: { tabId: targetTab.id },
+                            func: () => {
+                                document.body.style.zoom = "100%";
+                                return Math.max(
+                                    document.body.scrollHeight,
+                                    document.documentElement.scrollHeight,
+                                    document.body.offsetHeight,
+                                    document.documentElement.offsetHeight,
+                                    document.body.clientHeight,
+                                    document.documentElement.clientHeight
+                                );
+                            },
+                        },
+                        (results) => {
+                            if (chrome.runtime.lastError) {
+                                console.error(chrome.runtime.lastError);
+                                return;
+                            }
+                            const pageHeight = results[0].result;
+                            sendResponse({ pageHeight });
+                        }
+                    );
+                    break;
                 case "capturePage":
                     await emulateCaptureViewport(targetTab.id, deviceMetrics);
                     break;

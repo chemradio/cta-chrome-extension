@@ -26,6 +26,14 @@ function updateResolutionInputs() {
     } else if (selectedLayout == "fullpage") {
         widthInput.disabled = true;
         heightInput.disabled = true;
+        chrome.runtime.sendMessage({ action: "getPageHeight" }, (response) => {
+            if (chrome.runtime.lastError) {
+                console.error("Error getting viewport size:", response);
+                return;
+            }
+            widthInput.value = 1920;
+            heightInput.value = Math.min(response.pageHeight + 1, 9999);
+        });
     } else {
         widthInput.disabled = false;
         heightInput.disabled = false;
