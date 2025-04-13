@@ -100,6 +100,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     break;
                 case "manualCleanup":
                     console.log("Manual Cleanup action received.");
+                    chrome.scripting.executeScript({
+                        target: { tabId: targetTab.id },
+                        files: ["contentScripts/cleanup.js"],
+                    });
                     break;
                 default:
                     console.log(
