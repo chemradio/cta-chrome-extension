@@ -1,6 +1,6 @@
 (function () {
     const debounceDelay = 1500;
-    const maxWaitTime = 3000;
+    const maxWaitTime = 4000;
     let mutationTimeout;
     let maxWaitTimeout;
 

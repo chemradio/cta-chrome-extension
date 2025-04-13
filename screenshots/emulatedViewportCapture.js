@@ -17,7 +17,8 @@ export const emulateCaptureViewport = async (
         height: 1080,
         deviceScaleFactor: 1,
         mobile: false,
-    }
+    },
+    screenshotSuffix = ""
 ) => {
     try {
         console.log("emulate and capture");
@@ -42,7 +43,7 @@ export const emulateCaptureViewport = async (
         console.log("Mutations settled, taking screenshot...");
         const screenshot = await takeScreenshotClip(tabId);
         console.log("Screenshot taken, downloading...");
-        downloadScreenshot(screenshot, "final-screenshot");
+        downloadScreenshot(screenshot, `page-${screenshotSuffix}`);
         console.log("Screenshot downloaded.");
         console.log("Restoring scrollbars");
         chrome.scripting.executeScript({

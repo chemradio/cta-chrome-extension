@@ -36,6 +36,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 deviceScaleFactor: request.settings?.deviceScaleFactor || 1,
                 mobile: request.settings?.mobile || false,
             };
+            const domainName = new URL(targetTab.url).hostname;
+            const currentDate = new Date();
+            const timestamp = currentDate
+                .toISOString()
+                .replace(/T/, "-")
+                .replace(/:/g, "-")
+                .split(".")[0];
+            const screenshotSuffix = `${domainName}-${timestamp}`;
 
             switch (request.action) {
                 case "getPageHeight":
@@ -66,7 +74,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     );
                     break;
                 case "capturePage":
-                    await emulateCaptureViewport(targetTab.id, deviceMetrics);
+                    await emulateCaptureViewport(
+                        targetTab.id,
+                        deviceMetrics,
+                        screenshotSuffix
+                    );
                     break;
                 case "captureElement":
                     // inject the content script to capture a specific element
@@ -82,6 +94,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             chrome.tabs.sendMessage(targetTab.id, {
                                 action: "sendDeviceMetrics",
                                 deviceMetrics,
+                                screenshotSuffix,
                             });
                         });
                     break;

@@ -1,7 +1,10 @@
 let deviceMetrics;
+let screenshotSuffix;
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "sendDeviceMetrics") {
         deviceMetrics = message.deviceMetrics;
+        screenshotSuffix = message.screenshotSuffix;
     } else {
         alert("Different message");
         console.log(
@@ -192,8 +195,9 @@ function handleClick(e) {
     const elementSignature = getElementSignature(currentElement);
     const m = {
         action: "elementClicked",
-        elementSignature: elementSignature,
-        deviceMetrics: deviceMetrics,
+        elementSignature,
+        deviceMetrics,
+        screenshotSuffix,
     };
     cleanup();
     // alert("sending message: " + JSON.stringify(m));
@@ -218,6 +222,7 @@ function handleClick(e) {
             chrome.runtime.sendMessage({
                 action: "captureCropScreenshot",
                 cropRect: elementRect,
+                screenshotSuffix,
             });
         }
     });

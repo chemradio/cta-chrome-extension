@@ -52,7 +52,10 @@ export const addElementClickedListener = () => {
                     request.cropRect
                 );
                 console.log("Screenshot taken, downloading...");
-                downloadScreenshot(screenshot, "element-screenshot");
+                downloadScreenshot(
+                    screenshot,
+                    `element-${request.screenshotSuffix}`
+                );
                 console.log("Screenshot downloaded.");
                 detachDebugger(sender.tab.id);
             })();
