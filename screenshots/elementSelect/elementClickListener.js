@@ -24,6 +24,7 @@ export const addElementClickedListener = () => {
                     elementSignature: elementSignature,
                 });
             })();
+            return true;
 
             // attachDebugger(sender.tab.id).then(() => {
             //     enableEmulation(sender.tab.id, request.deviceMetrics).then(
