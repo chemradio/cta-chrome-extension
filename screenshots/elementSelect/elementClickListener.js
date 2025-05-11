@@ -18,7 +18,12 @@ export const addElementClickedListener = () => {
                 await enableEmulation(sender.tab.id, request.deviceMetrics);
                 await injectMutationWatcher(sender.tab.id);
                 await waitForMutationSettle();
-
+                console.log("BG: Waiting for mutations to settle...");
+                console.log(
+                    "BG: Requesting element rect/ element:",
+                    elementSignature
+                );
+                // Wait for mutations to settle
                 sendResponse({
                     action: "getElementRect",
                     elementSignature: elementSignature,

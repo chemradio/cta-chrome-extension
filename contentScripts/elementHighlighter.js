@@ -27,6 +27,7 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
 document.body.style.zoom = "100%";
 
 function findElementBySignature(signature) {
@@ -192,14 +193,18 @@ function handleClick(e) {
     e.preventDefault();
     e.stopPropagation();
     highlight(currentElement);
-    const elementSignature = getElementSignature(currentElement);
+
+    cleanup();
+    let separatedElement = separateElement(currentElement);
+
+    const elementSignature = getElementSignature(separatedElement);
     const m = {
         action: "elementClicked",
         elementSignature,
         deviceMetrics,
         screenshotSuffix,
     };
-    cleanup();
+
     // alert("sending message: " + JSON.stringify(m));
 
     chrome.runtime.sendMessage(m, (response) => {
@@ -208,10 +213,13 @@ function handleClick(e) {
                 "Got elementSignature back:",
                 response.elementSignature
             );
-            const targetElement = findElementBySignature(
-                response.elementSignature
+            const targetElement = document.querySelector(
+                "#clonedElementForScreenshot"
             );
-            console.log("Target element found:", targetElement);
+            // const targetElement = findElementBySignature(
+            //     response.elementSignature
+            // );
+            console.log("Target element found:", JSON.stringify(targetElement));
             // scroll el to view
             // targetElement.scrollIntoView({
             //     behavior: "smooth",
@@ -219,6 +227,7 @@ function handleClick(e) {
             // });
             const elementRect = getElementRect(targetElement);
             console.log("Element rect:", elementRect);
+            // alert("Element rect:", JSON.stringify(elementRect));
             chrome.runtime.sendMessage({
                 action: "captureCropScreenshot",
                 cropRect: elementRect,
@@ -226,6 +235,44 @@ function handleClick(e) {
             });
         }
     });
+}
+
+function separateElement(element) {
+    //     const style = document.createElement("style");
+    //     style.textContent = `
+    //   * {
+    //     pointer-events: none !important;
+    //   }
+    //   *:hover {
+    //     all: unset !important;
+    //   }
+    // `;
+    //     document.head.appendChild(style);
+    const rect = element.getBoundingClientRect();
+    const clone = element.cloneNode(true);
+
+    // document.body.innerHTML = "";
+    [...document.body.children].forEach((el) => {
+        if (
+            // el !== currentElement &&
+            el.tagName !== "STYLE" &&
+            el.tagName !== "LINK"
+        ) {
+            el.remove();
+        }
+    });
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    document.body.style.position = "relative";
+
+    clone.style.position = "absolute";
+    clone.style.top = "0";
+    clone.style.left = "0";
+    clone.style.width = rect.width + "px";
+    clone.style.height = rect.height + "px";
+    clone.id = "clonedElementForScreenshot";
+    document.body.appendChild(clone);
+    return clone;
 }
 
 function cleanup() {
