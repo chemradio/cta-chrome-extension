@@ -30,23 +30,6 @@ export const addElementClickedListener = () => {
                 });
             })();
             return true;
-
-            // attachDebugger(sender.tab.id).then(() => {
-            //     enableEmulation(sender.tab.id, request.deviceMetrics).then(
-            //          () => {
-            //             console.log("Emulation enabled for element click.");
-            //             await injectMutationWatcher(tabId);
-            //             console.log("Waiting for mutations to settle...");
-            //             await waitForMutationSettle();
-
-            //             // ✅ Send response back to content script
-            //             sendResponse({
-            //                 action: "getElementRect",
-            //                 elementSignature: elementSignature,
-            //             });
-            //         }
-            //     );
-            // });
         } else if (request.action === "captureCropScreenshot") {
             console.log("capture crop init!!!!!!!!!!!.");
             console.log(request.cropRect);
