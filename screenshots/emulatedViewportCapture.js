@@ -21,41 +21,42 @@ export const emulateCaptureViewport = async (
     screenshotSuffix = ""
 ) => {
     try {
-        console.log("emulate and capture");
-        console.log("Attaching debugger...");
         await attachDebugger(tabId);
-        console.log("Debugger attached, enabling emulation...");
-        await enableEmulation(tabId, deviceMetrics);
-        console.log("Emulation enabled, removing scrollbars...");
-        chrome.scripting.executeScript({
+
+        // Hide scrollbars before emulation to avoid layout shift
+        await chrome.scripting.executeScript({
             target: { tabId },
             func: () => {
-                const style = document.createElement("style");
-                style.id = "hide-scrollbar-style";
-                style.innerHTML = `*::-webkit-scrollbar { display: none !important; }`;
-                document.head.appendChild(style);
+                if (document.getElementById("__cta-no-scroll")) return;
+                const s = document.createElement("style");
+                s.id = "__cta-no-scroll";
+                s.textContent =
+                    "*::-webkit-scrollbar { display: none !important; }";
+                document.head.appendChild(s);
             },
         });
-        console.log("Scrollbars removed, injecting mutation watcher...");
+
+        // Inject mutation watcher BEFORE emulation so it catches the reflow
         await injectMutationWatcher(tabId);
-        console.log("Waiting for mutations to settle...");
+
+        await enableEmulation(tabId, deviceMetrics);
+
+        // Wait for page to settle after emulation-triggered reflow
         await waitForMutationSettle();
-        console.log("Mutations settled, taking screenshot...");
+
         const screenshot = await takeScreenshotClip(tabId);
-        console.log("Screenshot taken, downloading...");
         downloadScreenshot(screenshot, `page-${screenshotSuffix}`);
-        console.log("Screenshot downloaded.");
-        console.log("Restoring scrollbars");
-        chrome.scripting.executeScript({
-            target: { tabId },
-            func: () => {
-                const style = document.getElementById("hide-scrollbar-style");
-                if (style) style.remove();
-            },
-        });
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Page capture failed:", error);
     } finally {
+        chrome.scripting
+            .executeScript({
+                target: { tabId },
+                func: () =>
+                    document.getElementById("__cta-no-scroll")?.remove(),
+            })
+            .catch(() => {});
+
         detachDebugger(tabId);
     }
 };

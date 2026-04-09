@@ -1,143 +1,141 @@
 const layoutInputs = document.querySelectorAll('input[name="layout"]');
-const widthInput = document.getElementById("width");
-const heightInput = document.getElementById("height");
-const scaleSlider = document.getElementById("scale");
-const scaleValue = document.getElementById("scale-value");
-const capturePageBtn = document.getElementById("capture-page");
-const captureElementBtn = document.getElementById("capture-element");
-const manualCleanupBtn = document.getElementById("manual-cleanup");
+const widthInput   = document.getElementById("width");
+const heightInput  = document.getElementById("height");
+const statusEl     = document.getElementById("status");
 
-// Preset resolutions
 const presets = {
     horizontal: { width: 1920, height: 1080 },
-    vertical: { width: 1920, height: 7000 },
-    fullpage: { width: 300, height: 300 },
-    custom: { width: 4000, height: 4000 },
+    vertical:   { width: 1920, height: 7000 },
+    fullpage:   { width: 1920, height: null },
+    custom:     null,
 };
 
-// Update resolution inputs based on layout
+// ─── Status helper ────────────────────────────────────────────────────────────
+
+let statusTimer = null;
+
+function setStatus(msg, type = "busy", autoClear = 0) {
+    statusEl.textContent = msg;
+    statusEl.className = `status ${type}`;
+    clearTimeout(statusTimer);
+    if (autoClear > 0) {
+        statusTimer = setTimeout(() => {
+            statusEl.textContent = "";
+            statusEl.className = "status";
+        }, autoClear);
+    }
+}
+
+// ─── Resolution ───────────────────────────────────────────────────────────────
+
+function getSelectedLayout() {
+    return document.querySelector('input[name="layout"]:checked').value;
+}
+
 function updateResolutionInputs() {
-    const selectedLayout = document.querySelector(
-        'input[name="layout"]:checked'
-    ).value;
-    if (selectedLayout == "custom") {
-        widthInput.disabled = false;
+    const layout = getSelectedLayout();
+
+    if (layout === "custom") {
+        widthInput.disabled  = false;
         heightInput.disabled = false;
-    } else if (selectedLayout == "fullpage") {
-        widthInput.disabled = true;
+        return;
+    }
+
+    if (layout === "fullpage") {
+        widthInput.disabled  = true;
         heightInput.disabled = true;
+        widthInput.value     = 1920;
+        heightInput.value    = "…";
+        setStatus("Measuring page height…");
         chrome.runtime.sendMessage({ action: "getPageHeight" }, (response) => {
             if (chrome.runtime.lastError) {
-                console.error("Error getting viewport size:", response);
+                heightInput.value = 9999;
+                setStatus("Could not measure page height", "error", 3000);
                 return;
             }
-            widthInput.value = 1920;
             heightInput.value = Math.min(response.pageHeight, 9999);
+            setStatus("");
         });
-    } else {
-        widthInput.disabled = false;
-        heightInput.disabled = false;
-        const preset = presets[selectedLayout];
-        widthInput.value = preset.width;
-        heightInput.value = preset.height;
+        return;
     }
+
+    widthInput.disabled  = false;
+    heightInput.disabled = false;
+    const preset         = presets[layout];
+    widthInput.value     = preset.width;
+    heightInput.value    = preset.height;
 }
 
-// Switch to custom layout if width/height changes
 function checkCustomResolution() {
-    const selectedLayout = document.querySelector(
-        'input[name="layout"]:checked'
-    ).value;
-    if (selectedLayout !== "custom") {
-        const preset = presets[selectedLayout];
-        if (
-            parseInt(widthInput.value) !== preset.width ||
-            parseInt(heightInput.value) !== preset.height
-        ) {
-            document.getElementById("custom").checked = true;
-        }
+    const layout = getSelectedLayout();
+    if (layout === "custom" || layout === "fullpage") return;
+
+    const preset = presets[layout];
+    if (
+        parseInt(widthInput.value)  !== preset.width ||
+        parseInt(heightInput.value) !== preset.height
+    ) {
+        document.getElementById("custom").checked = true;
+        widthInput.disabled  = false;
+        heightInput.disabled = false;
     }
 }
 
-// Event listeners for layout changes
-layoutInputs.forEach((input) => {
-    input.addEventListener("change", updateResolutionInputs);
-});
+function getScaleFactor() {
+    for (const s of document.getElementsByName("scale")) {
+        if (s.checked) return parseInt(s.value);
+    }
+    return 2;
+}
 
-// Event listeners for resolution changes
-widthInput.addEventListener("input", checkCustomResolution);
-heightInput.addEventListener("input", checkCustomResolution);
-
-// Initial setup
-updateResolutionInputs();
-
-// Button click handlers (placeholders)
-capturePageBtn.addEventListener("click", () => {
-    const settings = getSettings();
-    console.log("Capture Page:", settings);
-    sendMessageToBackground({ action: "capturePage", settings })
-        .then((response) => {
-            console.log("Response from background:", response);
-        })
-        .catch((error) => {
-            console.error("Error sending message to background:", error);
-        });
-});
-
-captureElementBtn.addEventListener("click", () => {
-    const settings = getSettings();
-    console.log("Capture Element:", settings);
-    sendMessageToBackground({ action: "captureElement", settings })
-        .then((response) => {
-            console.log("Response from background:", response);
-        })
-        .catch((error) => {
-            console.error("Error sending message to background:", error);
-        });
-});
-
-manualCleanupBtn.addEventListener("click", () => {
-    sendMessageToBackground({ action: "manualCleanup" })
-        .then((response) => {
-            console.log("Response from background:", response);
-        })
-        .catch((error) => {
-            console.error("Error sending message to background:", error);
-        });
-});
-
-// Gather settings
 function getSettings() {
-    const selectedLayout = document.querySelector(
-        'input[name="layout"]:checked'
-    ).value;
-
-    let scaleValue;
-    const scales = document.getElementsByName("scale");
-    for (const s of scales) {
-        if (s.checked) {
-            scaleValue = s.value;
-            break;
-        }
-    }
-    const output = {
-        layout: selectedLayout,
-        width: parseInt(widthInput.value),
-        height: parseInt(heightInput.value),
-        deviceScaleFactor: parseInt(scaleValue),
-        cleanup: document.getElementById("cleanup").checked,
+    return {
+        layout:            getSelectedLayout(),
+        width:             parseInt(widthInput.value)  || 1920,
+        height:            parseInt(heightInput.value) || 1080,
+        deviceScaleFactor: getScaleFactor(),
+        cleanup:           document.getElementById("cleanup").checked,
     };
-    return output;
 }
 
-const sendMessageToBackground = (message) => {
-    return new Promise((resolve, reject) => {
+// ─── Messaging ────────────────────────────────────────────────────────────────
+
+const sendMessage = (message) =>
+    new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(message, (response) => {
-            if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
-            } else {
-                resolve(response);
-            }
+            if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+            else resolve(response);
         });
     });
-};
+
+// ─── Button handlers ──────────────────────────────────────────────────────────
+
+document.getElementById("capture-page").addEventListener("click", () => {
+    setStatus("Capturing page…");
+    sendMessage({ action: "capturePage", settings: getSettings() })
+        .then(() => setStatus("Done — check Downloads", "ok", 4000))
+        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+});
+
+document.getElementById("capture-element").addEventListener("click", () => {
+    setStatus("Click an element on the page…", "busy");
+    sendMessage({ action: "captureElement", settings: getSettings() })
+        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+});
+
+document.getElementById("manual-cleanup").addEventListener("click", () => {
+    setStatus("Cleaning up…");
+    sendMessage({ action: "manualCleanup" })
+        .then(() => setStatus("Cleanup done", "ok", 3000))
+        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+layoutInputs.forEach((input) =>
+    input.addEventListener("change", updateResolutionInputs)
+);
+widthInput.addEventListener("input",  checkCustomResolution);
+heightInput.addEventListener("input", checkCustomResolution);
+
+updateResolutionInputs();

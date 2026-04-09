@@ -2,15 +2,15 @@ import { emulationOptions } from "../screenshots/emulation/emulationOptions.js";
 
 export function createContextMenus() {
     chrome.contextMenus.create({
-        id: "elmentScreenshot",
+        id: "elementScreenshot",
         title: "Element Screenshot",
         contexts: ["all"],
     });
 
-    for (const [emulationName, _] of Object.entries(emulationOptions)) {
+    for (const emulationName of Object.keys(emulationOptions)) {
         chrome.contextMenus.create({
             id: emulationName,
-            title: emulationName,
+            title: `Screenshot: ${emulationName}`,
             contexts: ["all"],
         });
     }

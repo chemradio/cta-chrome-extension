@@ -1,33 +1,51 @@
 import { emulateCaptureViewport } from "../screenshots/emulatedViewportCapture.js";
+import { emulationOptions } from "../screenshots/emulation/emulationOptions.js";
 
-export const addContextMenusListener = async () => {
+function buildTimestampSuffix(url) {
+    try {
+        const domain = new URL(url).hostname;
+        const ts = new Date()
+            .toISOString()
+            .replace(/T/, "-")
+            .replace(/:/g, "-")
+            .split(".")[0];
+        return `${domain}-${ts}`;
+    } catch {
+        return `screenshot-${Date.now()}`;
+    }
+}
+
+export const addContextMenusListener = () => {
     chrome.contextMenus.onClicked.addListener((info, tab) => {
-        console.log("click");
-        console.log("context menu triggered");
-        console.log(info);
-        const contextMenudId = info.menuItemId;
-        const pageUrl = info.pageUrl;
+        const id = info.menuItemId;
+        const suffix = buildTimestampSuffix(info.pageUrl);
 
-        console.log(contextMenudId);
-        console.log(pageUrl);
-        emulateCaptureViewport(tab.id).then(() => console.log("OK"));
-        //     emulateAndCapture(tab.id)
-        //         .then(() => console.log("Capture complete"))
-        //         .catch((error) => console.error("Error capturing:", error));
-        //     //     // parse tab domain name like "facebook", "google", "youtube"
-        //     //     if (info.menuItemId && tab.id) {
-        //     //         // element screenshot
-        //     //         if (info.menuItemId === "elmentScreenshot") {
-        //     //             chrome.scripting.executeScript({
-        //     //                 target: { tabId: tab.id },
-        //     //                 files: ["content.js"],
-        //     //             });
-        //     //             return;
-        //     //         }
-        //     //         // full page screenshot
-        //     //         console.log(`Emulating ${info.menuItemId} on tab ${tab.id}`);
-        //     //         console.log(emulationOptions[info.menuItemId]);
-        //     //         emulateAndCapture(tab.id, emulationOptions[info.menuItemId]);
-        //     //     }
+        if (id === "elementScreenshot") {
+            // Inject element highlighter with default 1920×1080 @ 2x
+            const deviceMetrics = {
+                width: 1920,
+                height: 1080,
+                deviceScaleFactor: 2,
+                mobile: false,
+            };
+            chrome.scripting
+                .executeScript({
+                    target: { tabId: tab.id },
+                    files: ["contentScripts/elementHighlighter.js"],
+                })
+                .then(() => {
+                    chrome.tabs.sendMessage(tab.id, {
+                        action: "sendDeviceMetrics",
+                        deviceMetrics,
+                        screenshotSuffix: suffix,
+                    });
+                });
+            return;
+        }
+
+        const preset = emulationOptions[id];
+        if (preset) {
+            emulateCaptureViewport(tab.id, preset, suffix);
+        }
     });
 };

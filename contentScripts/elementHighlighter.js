@@ -1,304 +1,183 @@
-let deviceMetrics;
-let screenshotSuffix;
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "sendDeviceMetrics") {
-        deviceMetrics = message.deviceMetrics;
-        screenshotSuffix = message.screenshotSuffix;
-    } else {
-        alert("Different message");
-        console.log(
-            "Unknown action received in content script:",
-            message.action
-        );
-    }
-});
-
-const style = document.createElement("style");
-style.textContent = `
-  @keyframes glowingBorder {
-    0% { box-shadow: 0 0 5px 2px  #0ECAE3; }
-    50% { box-shadow: 0 0 15px 5px  #0ECAE3; }
-    100% { box-shadow: 0 0 5px 2px  #0ECAE3; }
-  }
-  .animated-highlight {
-    outline: 2px solid #0ECAE3 !important;
-    animation: glowingBorder 1s infinite;
-  }
-`;
-document.head.appendChild(style);
-
-document.body.style.zoom = "100%";
-
-function findElementBySignature(signature) {
-    if (!signature) return null;
-
-    if (signature.id) {
-        let el = document.getElementById(signature.id);
-        if (el) return el;
+(function () {
+    // Guard against double-injection: if a previous instance is running, clean it up first.
+    // window is the shared isolated-world window, so this persists across executeScript calls.
+    if (window.__ctaHighlighterDestroy) {
+        window.__ctaHighlighterDestroy();
     }
 
-    if (signature.xpath) {
-        let result = document.evaluate(
-            signature.xpath,
-            document,
-            null,
-            XPathResult.FIRST_ORDERED_NODE_TYPE,
-            null
-        );
-        if (result.singleNodeValue) return result.singleNodeValue;
-    }
+    // ─── State ────────────────────────────────────────────────────────────────
 
-    // Fallback search using other attributes
-    let candidates = [...document.querySelectorAll(signature.tag)];
-    candidates = candidates.filter((el) =>
-        signature.classes.every((cls) => el.classList.contains(cls))
-    );
-    candidates = candidates.filter((el) =>
-        Object.entries(signature.dataAttrs).every(
-            ([key, value]) => el.getAttribute(key) === value
-        )
-    );
+    let deviceMetrics = null;
+    let screenshotSuffix = null;
+    let currentElement = null;
 
-    if (signature.text) {
-        candidates = candidates.filter((el) =>
-            el.innerText?.trim().includes(signature.text)
-        );
-    }
+    const STYLE_ID = "__cta-hl-style";
 
-    if (signature.siblingsIndex !== undefined && signature.siblingsIndex >= 0) {
-        candidates = candidates.filter(
-            (el) =>
-                Array.from(el.parentNode?.children || []).indexOf(el) ===
-                signature.siblingsIndex
-        );
-    }
+    // ─── Receive device metrics sent by background after injection ────────────
 
-    return candidates.length > 0 ? candidates[0] : null;
-}
-
-function getXPath(element) {
-    if (element.id) {
-        return '//*[@id="' + element.id + '"]';
-    }
-    if (element === document.body) {
-        return "/html/body";
-    }
-
-    let ix = 0;
-    const siblings = element.parentNode ? element.parentNode.childNodes : [];
-    for (let i = 0; i < siblings.length; i++) {
-        const sibling = siblings[i];
-        if (sibling === element) {
-            const path = getXPath(element.parentNode);
-            return (
-                path +
-                "/" +
-                element.tagName.toLowerCase() +
-                "[" +
-                (ix + 1) +
-                "]"
-            );
+    const metricsListener = (message) => {
+        if (message.action === "sendDeviceMetrics") {
+            deviceMetrics = message.deviceMetrics;
+            screenshotSuffix = message.screenshotSuffix;
         }
-        if (sibling.nodeType === 1 && sibling.tagName === element.tagName) {
-            ix++;
-        }
-    }
-}
-
-function getElementSignature(element) {
-    if (!element) return null;
-
-    return {
-        xpath: getXPath(element),
-        tag: element.tagName.toLowerCase(),
-        id: element.id || null,
-        classes: Array.from(element.classList),
-        dataAttrs: Object.fromEntries(
-            [...element.attributes]
-                .filter((attr) => attr.name.startsWith("data-"))
-                .map((attr) => [attr.name, attr.value])
-        ),
-        text: element.innerText?.trim().slice(0, 100), // First 100 chars
-        siblingsIndex: Array.from(element.parentNode?.children || []).indexOf(
-            element
-        ),
     };
-}
+    chrome.runtime.onMessage.addListener(metricsListener);
 
-function getElementRectByXpath(xpath) {
-    const el = document.evaluate(
-        xpath,
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
-    ).singleNodeValue;
-    if (!el) return null;
+    // ─── Highlight styles ─────────────────────────────────────────────────────
 
-    const rect = el.getBoundingClientRect();
-
-    return {
-        x: rect.left + window.scrollX,
-        y: rect.top + window.scrollY,
-        width: rect.width,
-        height: rect.height,
-    };
-}
-
-function getElementRect(element) {
-    if (!element) return null;
-    element.scrollIntoView();
-    const rect = element.getBoundingClientRect();
-    const elementRect = {
-        x: rect.left + window.scrollX,
-        y: rect.top + window.scrollY,
-        width: rect.width,
-        height: rect.height,
-        // devicePixelRatio: window.devicePixelRatio,
-    };
-    return elementRect;
-}
-
-let currentElement = null;
-
-function highlight(el) {
-    if (currentElement) currentElement.classList.remove("animated-highlight");
-    currentElement = el;
-    if (currentElement) currentElement.classList.add("animated-highlight");
-}
-
-function wheelHandler(e) {
-    e.preventDefault();
-    if (!currentElement) return;
-
-    if (e.deltaY < 0) {
-        // Scroll up - parent
-        if (currentElement.parentElement) {
-            highlight(currentElement.parentElement);
-        }
-    } else {
-        // Scroll down - first child
-        const firstChild = Array.from(currentElement.children)[0];
-        if (firstChild) {
-            highlight(firstChild);
-        }
+    if (!document.getElementById(STYLE_ID)) {
+        const style = document.createElement("style");
+        style.id = STYLE_ID;
+        style.textContent = `
+            @keyframes __ctaGlow {
+                0%   { box-shadow: 0 0 5px 2px #0ECAE3; }
+                50%  { box-shadow: 0 0 18px 6px #0ECAE3; }
+                100% { box-shadow: 0 0 5px 2px #0ECAE3; }
+            }
+            .__cta-highlighted {
+                outline: 2px solid #0ECAE3 !important;
+                animation: __ctaGlow 1s infinite;
+                cursor: crosshair !important;
+            }
+        `;
+        document.head.appendChild(style);
     }
-}
 
-function handleClick(e) {
-    const currentZoomLevel = document.body.style.zoom;
-    document.body.style.zoom = "100%";
+    // ─── XPath ────────────────────────────────────────────────────────────────
 
-    e.preventDefault();
-    e.stopPropagation();
-    highlight(currentElement);
-
-    cleanup();
-    let separatedElement = separateElement(currentElement);
-
-    const elementSignature = getElementSignature(separatedElement);
-    const m = {
-        action: "elementClicked",
-        elementSignature,
-        deviceMetrics,
-        screenshotSuffix,
-    };
-
-    // alert("sending message: " + JSON.stringify(m));
-
-    chrome.runtime.sendMessage(m, (response) => {
-        if (response?.action === "getElementRect") {
-            console.log(
-                "Got elementSignature back:",
-                response.elementSignature
-            );
-            const targetElement = document.querySelector(
-                "#clonedElementForScreenshot"
-            );
-            // const targetElement = findElementBySignature(
-            //     response.elementSignature
-            // );
-            console.log("Target element found:", JSON.stringify(targetElement));
-            // scroll el to view
-            // targetElement.scrollIntoView({
-            //     behavior: "smooth",
-            //     block: "center",
-            // });
-            const elementRect = getElementRect(targetElement);
-            console.log("Element rect:", elementRect);
-            // alert("Element rect:", JSON.stringify(elementRect));
-            chrome.runtime.sendMessage({
-                action: "captureCropScreenshot",
-                cropRect: elementRect,
-                screenshotSuffix,
-            });
+    function getXPath(element) {
+        if (element.id) {
+            const id = element.id;
+            // XPath string literals can't contain both quote types — fall through
+            // to positional XPath for exotic IDs that contain both.
+            if (!id.includes('"')) return `//*[@id="${id}"]`;
+            if (!id.includes("'")) return `//*[@id='${id}']`;
         }
-    });
-}
+        if (element === document.body) return "/html/body";
+        if (element === document.documentElement) return "/html";
+        if (!element.parentNode) return null;
 
-function separateElement(element) {
-    //     const style = document.createElement("style");
-    //     style.textContent = `
-    //   * {
-    //     pointer-events: none !important;
-    //   }
-    //   *:hover {
-    //     all: unset !important;
-    //   }
-    // `;
-    //     document.head.appendChild(style);
-    const rect = element.getBoundingClientRect();
-    const clone = element.cloneNode(true);
+        let ix = 0;
+        const siblings = element.parentNode.childNodes;
+        for (let i = 0; i < siblings.length; i++) {
+            const sibling = siblings[i];
+            if (sibling === element) {
+                const parentPath = getXPath(element.parentNode);
+                if (!parentPath) return null;
+                return `${parentPath}/${element.tagName.toLowerCase()}[${ix + 1}]`;
+            }
+            if (sibling.nodeType === 1 && sibling.tagName === element.tagName) {
+                ix++;
+            }
+        }
+        return null;
+    }
 
-    // document.body.innerHTML = "";
-    [...document.body.children].forEach((el) => {
+    // ─── Highlight ────────────────────────────────────────────────────────────
+
+    function highlight(el) {
+        if (currentElement) currentElement.classList.remove("__cta-highlighted");
+        currentElement = el;
+        if (currentElement) currentElement.classList.add("__cta-highlighted");
+    }
+
+    // ─── Event handlers ───────────────────────────────────────────────────────
+
+    function onMouseOver(e) {
+        const target = e.target;
         if (
-            // el !== currentElement &&
-            el.tagName !== "STYLE" &&
-            el.tagName !== "LINK"
+            target &&
+            target !== document.documentElement &&
+            target !== document.body
         ) {
-            el.remove();
+            highlight(target);
         }
-    });
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
-    document.body.style.position = "relative";
-
-    clone.style.position = "absolute";
-    clone.style.top = "0";
-    clone.style.left = "0";
-    clone.style.width = rect.width + "px";
-    clone.style.height = rect.height + "px";
-    clone.id = "clonedElementForScreenshot";
-    document.body.appendChild(clone);
-    return clone;
-}
-
-function cleanup() {
-    document.querySelectorAll("*").forEach((el) => {
-        el.removeEventListener("mouseover", highlightElement);
-        el.removeEventListener("mouseout", removeHighlight);
-        el.removeEventListener("click", handleClick);
-        el.classList.remove("animated-highlight");
-    });
-    document.removeEventListener("wheel", wheelHandler);
-}
-
-function highlightElement(e) {
-    highlight(e.target);
-}
-
-function removeHighlight(e) {
-    if (e.target !== currentElement) {
-        e.target.classList.remove("animated-highlight");
+        e.stopPropagation();
     }
-}
 
-document.querySelectorAll("*").forEach((el) => {
-    el.addEventListener("mouseover", highlightElement);
-    el.addEventListener("mouseout", removeHighlight);
-    el.addEventListener("click", handleClick);
-});
+    function onMouseOut(e) {
+        if (e.target && e.target !== currentElement) {
+            e.target.classList.remove("__cta-highlighted");
+        }
+    }
 
-document.addEventListener("wheel", wheelHandler, { passive: false });
+    function onWheel(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!currentElement) return;
+
+        if (e.deltaY < 0) {
+            // Scroll up → parent element
+            const parent = currentElement.parentElement;
+            if (parent && parent !== document.documentElement) {
+                highlight(parent);
+            }
+        } else {
+            // Scroll down → first child element
+            const firstChild = currentElement.firstElementChild;
+            if (firstChild) highlight(firstChild);
+        }
+    }
+
+    function onClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!currentElement) return;
+
+        const element = currentElement;
+
+        // Remove highlight BEFORE measuring so the outline doesn't affect dimensions
+        element.classList.remove("__cta-highlighted");
+
+        // Absolute page coordinates (CSS pixels, scroll-offset adjusted)
+        // CDP Page.captureScreenshot clip uses page-absolute coordinates:
+        // x=0,y=0 means top-left of the document regardless of scroll position.
+        const rect = element.getBoundingClientRect();
+        const elementRect = {
+            x: Math.floor(rect.left + window.scrollX),
+            y: Math.floor(rect.top + window.scrollY),
+            width: Math.ceil(rect.width),
+            height: Math.ceil(rect.height),
+        };
+
+        const xpath = getXPath(element);
+
+        destroy();
+
+        chrome.runtime.sendMessage({
+            action: "elementClicked",
+            xpath,
+            elementRect,
+            deviceMetrics,
+            screenshotSuffix,
+        });
+    }
+
+    // ─── Cleanup ──────────────────────────────────────────────────────────────
+
+    function destroy() {
+        document.removeEventListener("mouseover", onMouseOver, true);
+        document.removeEventListener("mouseout", onMouseOut, true);
+        document.removeEventListener("click", onClick, true);
+        document.removeEventListener("wheel", onWheel, true);
+        chrome.runtime.onMessage.removeListener(metricsListener);
+
+        if (currentElement) {
+            currentElement.classList.remove("__cta-highlighted");
+            currentElement = null;
+        }
+
+        document.getElementById(STYLE_ID)?.remove();
+        delete window.__ctaHighlighterDestroy;
+    }
+
+    window.__ctaHighlighterDestroy = destroy;
+
+    // ─── Attach (capture phase so we intercept before page handlers) ──────────
+
+    document.addEventListener("mouseover", onMouseOver, { capture: true });
+    document.addEventListener("mouseout", onMouseOut, { capture: true });
+    document.addEventListener("click", onClick, { capture: true });
+    document.addEventListener("wheel", onWheel, { capture: true, passive: false });
+})();

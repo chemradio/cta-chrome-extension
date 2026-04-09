@@ -12,47 +12,45 @@ chrome.runtime.onInstalled.addListener(() => {});
 async function getActiveTab() {
     return new Promise((resolve, reject) => {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (chrome.runtime.lastError) {
-                return reject(chrome.runtime.lastError);
-            }
-            if (tabs.length === 0) {
-                return reject(new Error("No active tab found."));
-            }
+            if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+            if (!tabs.length) return reject(new Error("No active tab found."));
             resolve(tabs[0]);
         });
     });
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    // console.log("Received message:", request);
-    // console.log("Sender:", sender);
+function buildTimestampSuffix(url) {
+    const domain = new URL(url).hostname;
+    const ts = new Date()
+        .toISOString()
+        .replace(/T/, "-")
+        .replace(/:/g, "-")
+        .split(".")[0];
+    return `${domain}-${ts}`;
+}
 
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     (async () => {
         try {
-            const targetTab = await getActiveTab();
+            const tab = await getActiveTab();
+            const settings = request.settings ?? {};
+
             const deviceMetrics = {
-                width: request.settings?.width || 1920,
-                height: request.settings?.height || 1080,
-                deviceScaleFactor: request.settings?.deviceScaleFactor || 1,
-                mobile: request.settings?.mobile || false,
+                width: settings.width || 1920,
+                height: settings.height || 1080,
+                deviceScaleFactor: settings.deviceScaleFactor || 1,
+                mobile: settings.mobile || false,
             };
-            const domainName = new URL(targetTab.url).hostname;
-            const currentDate = new Date();
-            const timestamp = currentDate
-                .toISOString()
-                .replace(/T/, "-")
-                .replace(/:/g, "-")
-                .split(".")[0];
-            const screenshotSuffix = `${domainName}-${timestamp}`;
+
+            const screenshotSuffix = buildTimestampSuffix(tab.url);
 
             switch (request.action) {
                 case "getPageHeight":
-                    // Send a message to the content script to get the page height
                     chrome.scripting.executeScript(
                         {
-                            target: { tabId: targetTab.id },
+                            target: { tabId: tab.id },
                             func: () => {
-                                document.body.style.zoom = "100%";
+                                document.body.style.zoom = "";
                                 return Math.max(
                                     document.body.scrollHeight,
                                     document.documentElement.scrollHeight,
@@ -68,55 +66,56 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                                 console.error(chrome.runtime.lastError);
                                 return;
                             }
-                            const pageHeight = results[0].result;
-                            sendResponse({ pageHeight });
+                            sendResponse({ pageHeight: results[0].result });
                         }
                     );
                     break;
+
                 case "capturePage":
+                    // Run cleanup before capture if the option is enabled
+                    if (settings.cleanup) {
+                        await chrome.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            files: ["contentScripts/cleanup.js"],
+                        });
+                    }
                     await emulateCaptureViewport(
-                        targetTab.id,
+                        tab.id,
                         deviceMetrics,
                         screenshotSuffix
                     );
                     break;
+
                 case "captureElement":
-                    // inject the content script to capture a specific element
-                    chrome.scripting
-                        .executeScript({
-                            target: { tabId: targetTab.id },
-                            files: ["contentScripts/elementHighlighter.js"],
-                        })
-                        .then(() => {
-                            console.log("Element highlighter script injected.");
-                        })
-                        .then(() => {
-                            chrome.tabs.sendMessage(targetTab.id, {
-                                action: "sendDeviceMetrics",
-                                deviceMetrics,
-                                screenshotSuffix,
-                            });
-                        });
+                    await chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        files: ["contentScripts/elementHighlighter.js"],
+                    });
+                    // Send device metrics to the content script so it can attach
+                    // them to the elementClicked message when the user clicks
+                    chrome.tabs.sendMessage(tab.id, {
+                        action: "sendDeviceMetrics",
+                        deviceMetrics,
+                        screenshotSuffix,
+                    });
                     break;
+
                 case "manualCleanup":
-                    console.log("Manual Cleanup action received.");
                     chrome.scripting.executeScript({
-                        target: { tabId: targetTab.id },
+                        target: { tabId: tab.id },
                         files: ["contentScripts/cleanup.js"],
                     });
                     break;
+
                 default:
-                    console.log(
-                        `Unknown action in main bg script: ${request.action}`
-                    );
+                    // elementClicked / captureCropScreenshot / MUTATIONS_FINISHED
+                    // are handled by their own dedicated listeners
+                    break;
             }
         } catch (error) {
-            console.log(
-                "Error fetching active tab, probably another listener took care:",
-                error
-            );
+            console.error("Background message handler error:", error);
         }
     })();
 
-    return true; // Ensures `sendResponse` stays valid for async execution
+    return true;
 });

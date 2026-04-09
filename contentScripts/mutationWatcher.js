@@ -1,35 +1,32 @@
 (function () {
-    const debounceDelay = 1500;
-    const maxWaitTime = 4000;
-    let mutationTimeout;
-    let maxWaitTimeout;
+    // How long (ms) after the last mutation before we declare the page settled.
+    // Lower = faster captures; higher = safer for slow/animated pages.
+    const DEBOUNCE_MS = 800;
+
+    // Hard deadline — always resolve after this long even if mutations are ongoing
+    const MAX_WAIT_MS = 5000;
+
+    let debounceTimer = null;
+    let maxWaitTimer = null;
+
+    function done() {
+        clearTimeout(debounceTimer);
+        clearTimeout(maxWaitTimer);
+        observer.disconnect();
+        chrome.runtime.sendMessage({ type: "MUTATIONS_FINISHED" });
+    }
 
     const observer = new MutationObserver(() => {
-        clearTimeout(mutationTimeout);
-
-        mutationTimeout = setTimeout(() => {
-            console.log("Mutations settled, notifying background script");
-
-            chrome.runtime.sendMessage({ type: "MUTATIONS_FINISHED" });
-
-            observer.disconnect();
-            clearTimeout(maxWaitTimeout);
-        }, debounceDelay);
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(done, DEBOUNCE_MS);
     });
 
-    observer.observe(document.body, {
+    observer.observe(document.documentElement, {
         childList: true,
         subtree: true,
         attributes: true,
-        characterData: true,
+        characterData: false, // characterData changes are too noisy
     });
 
-    maxWaitTimeout = setTimeout(() => {
-        console.log("Max wait time reached, notifying background script");
-
-        chrome.runtime.sendMessage({ type: "MUTATIONS_FINISHED" });
-
-        observer.disconnect();
-        clearTimeout(mutationTimeout);
-    }, maxWaitTime);
+    maxWaitTimer = setTimeout(done, MAX_WAIT_MS);
 })();

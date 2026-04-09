@@ -2,121 +2,87 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>CTA Screenshot Helper</title>
         <link rel="stylesheet" href="popup.css" />
         <link
             rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,300..700;1,300..700&display=swap"
         />
     </head>
     <body>
         <div class="popup">
-            <h1>CTA Screenshot Helper</h1>
 
-            <!-- Layout and Resolution -->
-            <div class="section">
-                <label>Layout & Resolution</label>
-                <div class="layout-options">
-                    <input
-                        type="radio"
-                        id="horizontal"
-                        name="layout"
-                        value="horizontal"
-                    />
-                    <label for="horizontal" class="layout-btn"
-                        >Horizontal</label
-                    >
+            <header>
+                <span class="header-title">CTA Screenshot Helper</span>
+            </header>
 
-                    <input
-                        type="radio"
-                        id="vertical"
-                        name="layout"
-                        value="vertical"
-                        checked
-                    />
-                    <label for="vertical" class="layout-btn">Vertical</label>
+            <div class="body">
 
-                    <input
-                        type="radio"
-                        id="fullpage"
-                        name="layout"
-                        value="fullpage"
-                    />
-                    <label for="fullpage" class="layout-btn">Full Page</label>
+                <!-- Resolution -->
+                <section>
+                    <div class="section-label">Resolution</div>
+                    <div class="radio-group" id="layout-group">
+                        <input type="radio" id="horizontal" name="layout" value="horizontal" />
+                        <label for="horizontal">Horizontal</label>
 
-                    <input
-                        type="radio"
-                        id="custom"
-                        name="layout"
-                        value="custom"
-                    />
-                    <label for="custom" class="layout-btn custom-btn"
-                        >Custom</label
-                    >
-                </div>
-                <div class="resolution">
-                    <input
-                        type="number"
-                        id="width"
-                        placeholder="Width"
-                        min="300"
-                        max="9999"
-                        value="1920"
-                    />
-                    <input
-                        type="number"
-                        id="height"
-                        placeholder="Height"
-                        min="300"
-                        max="9999"
-                        value="1080"
-                    />
-                </div>
-            </div>
+                        <input type="radio" id="vertical" name="layout" value="vertical" checked />
+                        <label for="vertical">Vertical</label>
 
-            <!-- Scale Factor -->
-            <div class="section scale-factor">
-                <label id="scaleFactorLabel">Scale Factor:</label>
-                <!--  -->
-                <input type="radio" id="onex" name="scale" value="1" />
-                <label for="onex" class="layout-btn">1x</label>
-                <input type="radio" id="twox" name="scale" value="2" checked />
-                <label for="twox" class="layout-btn">2x</label>
-                <input type="radio" id="threex" name="scale" value="3" />
-                <label for="threex" class="layout-btn">3x</label>
-                <input type="radio" id="fourx" name="scale" value="4" />
-                <label for="fourx" class="layout-btn">4x</label>
-            </div>
+                        <input type="radio" id="fullpage" name="layout" value="fullpage" />
+                        <label for="fullpage">Full Page</label>
 
-            <!-- Cleanup Checkbox -->
-            <div class="section">
-                <div>
-                    <label>Cleanup</label>
-                    <label>
-                        <input type="checkbox" id="cleanup" checked /> Cleanup
-                        page before capture
+                        <input type="radio" id="custom" name="layout" value="custom" />
+                        <label for="custom" class="custom-label">Custom</label>
+                    </div>
+                    <div class="resolution-row">
+                        <input type="number" id="width"  placeholder="Width"  min="300" max="9999" value="1920" />
+                        <span class="resolution-x">×</span>
+                        <input type="number" id="height" placeholder="Height" min="300" max="9999" value="7000" />
+                        <span class="resolution-px">px</span>
+                    </div>
+                </section>
+
+                <div class="divider"></div>
+
+                <!-- Scale -->
+                <section>
+                    <div class="section-label">Scale</div>
+                    <div class="radio-group">
+                        <input type="radio" id="onex"   name="scale" value="1" />
+                        <label for="onex">1×</label>
+
+                        <input type="radio" id="twox"   name="scale" value="2" checked />
+                        <label for="twox">2×</label>
+
+                        <input type="radio" id="threex" name="scale" value="3" />
+                        <label for="threex">3×</label>
+
+                        <input type="radio" id="fourx"  name="scale" value="4" />
+                        <label for="fourx">4×</label>
+                    </div>
+                </section>
+
+                <div class="divider"></div>
+
+                <!-- Cleanup -->
+                <section class="cleanup-section">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="cleanup" checked />
+                        <span>Cleanup before capture</span>
                     </label>
-                    <button id="manual-cleanup" class="cleanup-button">
-                        Manual Cleanup
-                    </button>
-                </div>
+                    <button id="manual-cleanup" class="btn-ghost">Manual</button>
+                </section>
+
             </div>
 
-            <!-- Buttons -->
-            <div class="buttons">
-                <div>
-                    <button id="capture-page" class="capture-button">
-                        Capture Page
-                    </button>
-                </div>
-                <hr />
-                <div>
-                    <button id="capture-element" class="capture-button">
-                        Capture Single Element
-                    </button>
-                </div>
+            <!-- Actions -->
+            <div class="actions">
+                <button id="capture-page" class="btn-primary">Capture Page</button>
+                <button id="capture-element" class="btn-secondary">Capture Element</button>
             </div>
+
+            <div id="status" class="status"></div>
+
         </div>
 
         <script src="popup.js"></script>

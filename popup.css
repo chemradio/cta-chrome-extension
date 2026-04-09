@@ -1,245 +1,294 @@
 :root {
-  --primary: #2D1996;    /* Header background */
-  --white: #FFFFFF;      /* Header text */
-  --accent: #0ECAE3;     /* Cyan for buttons/slider */
-  --dark: #102C44;       /* Text color */
-  --highlight: #FF0055;  /* Reddish for Custom */
-  --light-bg: #DEE5EC;   /* Main background */
+    --dark:       #102C44;
+    --accent:     #0ECAE3;
+    --accent-dim: #0aaec5;
+    --white:      #FFFFFF;
+    --bg:         #E8EDF2;
+    --bg-section: #F2F5F8;
+    --border:     #C8D3DC;
+    --text:       #102C44;
+    --text-muted: #5a7a92;
+    --danger:     #E8003C;
+    --radius:     6px;
+    --radius-sm:  4px;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-  background: var(--light-bg);
-  font-family: 'Roboto Condensed', sans-serif; /* Applied globally */
-  margin: 0;
-  padding: 0;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+    background: var(--bg);
+    font-size: 13px;
+    color: var(--text);
 }
+
+/* ── Shell ─────────────────────────────────────────── */
 
 .popup {
-  width: 320px;
-  background: var(--light-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
 }
 
-h1 {
-  font-size: 18px;
-  font-weight: 700; /* Bold variant of Roboto Condensed */
-  color: var(--white);
-  background: var(--dark);
-  margin: 0;
-  padding: 12px 16px;
+/* ── Header ────────────────────────────────────────── */
+
+header {
+    background: var(--dark);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.section {
-  margin: 16px;
+.header-title {
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
-label {
-  display: block;
-  font-size: 14px;
-  font-weight: 400; /* Regular weight */
-  color: var(--dark);
-  margin-bottom: 4px;
-}
-#scaleFactorLabel{
-  margin-top: 4px;
-}
-/* Layout Buttons */
-.layout-options {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
+/* ── Body (all sections) ───────────────────────────── */
+
+.body {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
-.scale-factor {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
-  text-align: center;
-  justify-content: center;
+.divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
 }
 
-.layout-options input[type="radio"] {
-  display: none;
-}
-.scale-factor input[type="radio"] {
-  display: none;
-}
-
-.layout-btn {
-  flex: 1;
-  padding: 6px 0;
-  /* border: 2px solid var(--primary); */
-  border-radius: 4px;
-  font-size: 12px;
-  text-align: center;
-  color: var(--primary);
-  background: var(--white);
-  cursor: pointer;
-  transition: all 0.2s;
+section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-.layout-options input[type="radio"]:checked + .layout-btn {
-  background: var(--accent);
-  color: var(--white);
+.section-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
 }
 
-.scale-factor input[type="radio"]:checked + .layout-btn {
-  background: var(--accent);
-  color: var(--white);
+/* ── Radio pill groups ─────────────────────────────── */
+
+.radio-group {
+    display: flex;
+    gap: 4px;
 }
 
-.layout-btn:hover {
-  background: var(--accent);
-  color: var(--dark);
+.radio-group input[type="radio"] {
+    display: none;
 }
 
-/* Custom Button Styling */
-.custom-btn {
-  border-color: var(--highlight);
-  color: var(--highlight);
+.radio-group label {
+    flex: 1;
+    padding: 5px 4px;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    user-select: none;
+    display: block;
 }
 
-.layout-options input[type="radio"]:checked + .custom-btn {
-  background: var(--highlight);
-  color: var(--white);
+.radio-group label:hover {
+    border-color: var(--accent);
+    color: var(--text);
 }
 
-.custom-btn:hover {
-  background: var(--highlight);
-  color: var(--dark);
+.radio-group input[type="radio"]:checked + label {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
+    font-weight: 700;
 }
 
-/* Resolution */
-.resolution {
-  display: flex;
-  gap: 8px;
+/* Custom layout option */
+.custom-label {
+    color: var(--danger) !important;
+    border-color: var(--border) !important;
 }
 
-input[type="number"] {
-  width: 50%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-  color: var(--dark);
-  box-sizing: border-box;
+.custom-label:hover {
+    border-color: var(--danger) !important;
 }
 
-input[type="number"]:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 4px var(--accent);
+#custom:checked + .custom-label {
+    background: var(--danger) !important;
+    border-color: var(--danger) !important;
+    color: var(--white) !important;
 }
 
-input[type="range"] {
-  width: 100%;
-  -webkit-appearance: none;
-  background: white;
-  accent-color: var(--accent);
+/* ── Resolution inputs ─────────────────────────────── */
+
+.resolution-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
-
-
-
-
-#scale-value {
-  color: var(--dark);
-  font-weight: 700; /* Bold for emphasis */
+.resolution-row input[type="number"] {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 7px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--white);
+    text-align: center;
+    transition: border-color 0.12s;
+    -moz-appearance: textfield;
 }
 
-input[type="checkbox"] {
-  margin-right: 8px;
-  accent-color: var(--accent);
+.resolution-row input[type="number"]::-webkit-inner-spin-button,
+.resolution-row input[type="number"]::-webkit-outer-spin-button {
+    opacity: 0.4;
 }
 
-.buttons {
-  display: block;
-  padding: 5px;
-  
+.resolution-row input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
 }
-.capture-button{
-  width:100%;
+
+.resolution-row input[type="number"]:disabled {
+    opacity: 0.5;
+    background: var(--bg);
+}
+
+.resolution-x,
+.resolution-px {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* ── Cleanup row ───────────────────────────────────── */
+
+.cleanup-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* ── Buttons ───────────────────────────────────────── */
+
+.actions {
+    padding: 0 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 button {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    padding: 9px 12px;
+    letter-spacing: 0.02em;
+    transition: background 0.12s, color 0.12s, opacity 0.12s;
+    width: 100%;
+    text-align: center;
 }
 
-.inner-or {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-
+button:active {
+    opacity: 0.8;
 }
 
-hr {
-  border: 0;
-  border-top: 1px dotted var(--dark);
-  margin-left:100px;
-  margin-right:100px;
-
+.btn-primary {
+    background: var(--dark);
+    color: var(--white);
 }
 
-
-#manual-cleanup{
-  background: var(--white);
-  color: var(--dark);
-  border: 2px solid var(--accent);
-  
-
+.btn-primary:hover {
+    background: var(--accent);
+    color: var(--dark);
 }
 
-#manual-cleanup:hover {
-  background: var(--accent);
-  color: var(--dark);
+.btn-secondary {
+    background: var(--dark);
+    color: var(--white);
+    border: 2px dashed rgba(255,255,255,0.35);
 }
 
-
-#manual-cleanup:active {
-  background: var(--dark);
-  color: var(--accent);
+.btn-secondary:hover {
+    background: var(--accent);
+    color: var(--dark);
+    border-color: transparent;
 }
 
-
-
-
-#capture-page {
-  background: var(--dark);
-  color: var(--white);
-  border: 2px solid var(--dark);
+.btn-ghost {
+    background: transparent;
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    width: auto;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
-#capture-page:hover {
-  background: var(--accent);
-  color: var(--dark);
+.btn-ghost:hover {
+    background: var(--accent);
+    color: var(--dark);
 }
 
+/* ── Status bar ────────────────────────────────────── */
 
-#capture-page:active {
-  background: var(--white);
-  color: var(--dark);
+.status {
+    min-height: 22px;
+    padding: 0 12px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
 }
 
-
-#capture-element {
-  background: var(--dark);
-  color: var(--white);
-  border: 2px dashed var(--white);
-}
-
-#capture-element:hover {
-  background: var(--accent);
-  color: var(--dark);
-}
-
-#capture-element:active {
-  background: var(--dark);
-  color: var(--accent);
-}
+.status.ok    { color: var(--accent); }
+.status.error { color: var(--danger); }
+.status.busy  { color: var(--text-muted); }
