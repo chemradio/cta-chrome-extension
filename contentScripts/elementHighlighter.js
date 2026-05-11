@@ -127,19 +127,9 @@
 
         const element = currentElement;
 
-        // Remove highlight BEFORE measuring so the outline doesn't affect dimensions
+        // Remove highlight before computing xpath so any class-based xpath
+        // doesn't capture our own decoration.
         element.classList.remove("__cta-highlighted");
-
-        // Absolute page coordinates (CSS pixels, scroll-offset adjusted)
-        // CDP Page.captureScreenshot clip uses page-absolute coordinates:
-        // x=0,y=0 means top-left of the document regardless of scroll position.
-        const rect = element.getBoundingClientRect();
-        const elementRect = {
-            x: Math.floor(rect.left + window.scrollX),
-            y: Math.floor(rect.top + window.scrollY),
-            width: Math.ceil(rect.width),
-            height: Math.ceil(rect.height),
-        };
 
         const xpath = getXPath(element);
 
@@ -148,7 +138,6 @@
         chrome.runtime.sendMessage({
             action: "elementClicked",
             xpath,
-            elementRect,
             deviceMetrics,
             screenshotSuffix,
         });

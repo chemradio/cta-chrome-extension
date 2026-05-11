@@ -45,7 +45,9 @@ export const addContextMenusListener = () => {
 
         const preset = emulationOptions[id];
         if (preset) {
-            emulateCaptureViewport(tab.id, preset, suffix);
+            emulateCaptureViewport(tab.id, preset, suffix).catch((error) => {
+                console.error(`[CTA] Context-menu capture failed (${id}):`, error);
+            });
         }
     });
 };

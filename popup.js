@@ -48,12 +48,12 @@ function updateResolutionInputs() {
         heightInput.value    = "…";
         setStatus("Measuring page height…");
         chrome.runtime.sendMessage({ action: "getPageHeight" }, (response) => {
-            if (chrome.runtime.lastError) {
+            if (chrome.runtime.lastError || !response || response.ok === false) {
                 heightInput.value = 9999;
                 setStatus("Could not measure page height", "error", 3000);
                 return;
             }
-            heightInput.value = Math.min(response.pageHeight, 9999);
+            heightInput.value = Math.min(response.pageHeight ?? 9999, 9999);
             setStatus("");
         });
         return;
@@ -103,8 +103,13 @@ function getSettings() {
 const sendMessage = (message) =>
     new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(message, (response) => {
-            if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
-            else resolve(response);
+            if (chrome.runtime.lastError) {
+                return reject(new Error(chrome.runtime.lastError.message));
+            }
+            if (response && response.ok === false) {
+                return reject(new Error(response.error || "Request failed"));
+            }
+            resolve(response);
         });
     });
 
@@ -123,10 +128,45 @@ document.getElementById("capture-element").addEventListener("click", () => {
         .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
 });
 
+document.getElementById("capture-auto").addEventListener("click", () => {
+    setStatus("Auto-capturing…");
+    sendMessage({ action: "autoCapture", settings: getSettings() })
+        .then((res) => {
+            const label =
+                res?.mode === "element"
+                    ? `Auto: captured ${res.module} post`
+                    : res?.mode === "page"
+                    ? `Auto: full page for ${res.module}`
+                    : "Auto: full page (no site module)";
+            setStatus(`${label} — check Downloads`, "ok", 4000);
+        })
+        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+});
+
+// Element capture happens asynchronously after the user clicks something on
+// the page. The element listener broadcasts the final result here so the
+// popup status reflects what actually happened.
+chrome.runtime.onMessage.addListener((msg) => {
+    if (msg?.action !== "elementCaptureResult") return false;
+    if (msg.ok) {
+        setStatus("Done — check Downloads", "ok", 4000);
+    } else {
+        setStatus(msg.error || "Element capture failed", "error", 5000);
+    }
+    return false;
+});
+
 document.getElementById("manual-cleanup").addEventListener("click", () => {
     setStatus("Cleaning up…");
     sendMessage({ action: "manualCleanup" })
         .then(() => setStatus("Cleanup done", "ok", 3000))
+        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+});
+
+document.getElementById("remove-ads").addEventListener("click", () => {
+    setStatus("Removing ads…");
+    sendMessage({ action: "removeAds" })
+        .then(() => setStatus("Ads removed", "ok", 3000))
         .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
 });
 

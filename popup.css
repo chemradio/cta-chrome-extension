@@ -277,6 +277,23 @@ button:active {
     color: var(--dark);
 }
 
+.btn-helper {
+    background: var(--white);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.btn-helper:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
 /* ── Status bar ────────────────────────────────────── */
 
 .status {

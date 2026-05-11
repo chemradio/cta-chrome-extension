@@ -2,12 +2,25 @@ import { createContextMenus } from "./contextMenus/createContextMenus.js";
 import { addContextMenusListener } from "./contextMenus/contextMenuListener.js";
 import { emulateCaptureViewport } from "./screenshots/emulatedViewportCapture.js";
 import { addElementClickedListener } from "./screenshots/elementSelect/elementClickListener.js";
+import { refreshFilters, refreshIfStale } from "./adRemover/refreshFilters.js";
+import { runAutoCapture } from "./screenshots/autoCapture.js";
 
 addElementClickedListener();
 createContextMenus();
 addContextMenusListener();
 
-chrome.runtime.onInstalled.addListener(() => {});
+// Hydrate adblock filters on browser start and on install/update. These
+// are the two events that fire predictably across a service-worker lifetime;
+// "Remove ADs" itself lazily refreshes via refreshIfStale() as a fallback.
+const logRefreshFailure = (where) => (e) =>
+    console.error(`[CTA] filter refresh on ${where} failed:`, e);
+
+chrome.runtime.onStartup.addListener(() => {
+    refreshFilters().catch(logRefreshFailure("startup"));
+});
+chrome.runtime.onInstalled.addListener(() => {
+    refreshFilters().catch(logRefreshFailure("install"));
+});
 
 async function getActiveTab() {
     return new Promise((resolve, reject) => {
@@ -29,93 +42,140 @@ function buildTimestampSuffix(url) {
     return `${domain}-${ts}`;
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    (async () => {
-        try {
-            const tab = await getActiveTab();
-            const settings = request.settings ?? {};
-
-            const deviceMetrics = {
-                width: settings.width || 1920,
-                height: settings.height || 1080,
-                deviceScaleFactor: settings.deviceScaleFactor || 1,
-                mobile: settings.mobile || false,
-            };
-
-            const screenshotSuffix = buildTimestampSuffix(tab.url);
-
-            switch (request.action) {
-                case "getPageHeight":
-                    chrome.scripting.executeScript(
-                        {
-                            target: { tabId: tab.id },
-                            func: () => {
-                                document.body.style.zoom = "";
-                                return Math.max(
-                                    document.body.scrollHeight,
-                                    document.documentElement.scrollHeight,
-                                    document.body.offsetHeight,
-                                    document.documentElement.offsetHeight,
-                                    document.body.clientHeight,
-                                    document.documentElement.clientHeight
-                                );
-                            },
-                        },
-                        (results) => {
-                            if (chrome.runtime.lastError) {
-                                console.error(chrome.runtime.lastError);
-                                return;
-                            }
-                            sendResponse({ pageHeight: results[0].result });
-                        }
+function getPageHeight(tabId) {
+    return new Promise((resolve, reject) => {
+        chrome.scripting.executeScript(
+            {
+                target: { tabId },
+                func: () => {
+                    document.body.style.zoom = "";
+                    return Math.max(
+                        document.body.scrollHeight,
+                        document.documentElement.scrollHeight,
+                        document.body.offsetHeight,
+                        document.documentElement.offsetHeight,
+                        document.body.clientHeight,
+                        document.documentElement.clientHeight
                     );
-                    break;
-
-                case "capturePage":
-                    // Run cleanup before capture if the option is enabled
-                    if (settings.cleanup) {
-                        await chrome.scripting.executeScript({
-                            target: { tabId: tab.id },
-                            files: ["contentScripts/cleanup.js"],
-                        });
-                    }
-                    await emulateCaptureViewport(
-                        tab.id,
-                        deviceMetrics,
-                        screenshotSuffix
-                    );
-                    break;
-
-                case "captureElement":
-                    await chrome.scripting.executeScript({
-                        target: { tabId: tab.id },
-                        files: ["contentScripts/elementHighlighter.js"],
-                    });
-                    // Send device metrics to the content script so it can attach
-                    // them to the elementClicked message when the user clicks
-                    chrome.tabs.sendMessage(tab.id, {
-                        action: "sendDeviceMetrics",
-                        deviceMetrics,
-                        screenshotSuffix,
-                    });
-                    break;
-
-                case "manualCleanup":
-                    chrome.scripting.executeScript({
-                        target: { tabId: tab.id },
-                        files: ["contentScripts/cleanup.js"],
-                    });
-                    break;
-
-                default:
-                    // elementClicked / captureCropScreenshot / MUTATIONS_FINISHED
-                    // are handled by their own dedicated listeners
-                    break;
+                },
+            },
+            (results) => {
+                if (chrome.runtime.lastError)
+                    return reject(new Error(chrome.runtime.lastError.message));
+                resolve(results?.[0]?.result);
             }
-        } catch (error) {
-            console.error("Background message handler error:", error);
-        }
-    })();
+        );
+    });
+}
 
-    return true;
+async function handleAction(request) {
+    const tab = await getActiveTab();
+    const settings = request.settings ?? {};
+
+    const deviceMetrics = {
+        width: settings.width || 1920,
+        height: settings.height || 1080,
+        deviceScaleFactor: settings.deviceScaleFactor || 1,
+        mobile: settings.mobile || false,
+    };
+    const screenshotSuffix = buildTimestampSuffix(tab.url);
+
+    switch (request.action) {
+        case "getPageHeight": {
+            const pageHeight = await getPageHeight(tab.id);
+            return { pageHeight };
+        }
+
+        case "capturePage": {
+            if (settings.cleanup) {
+                await chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    files: ["contentScripts/cleanup.js"],
+                });
+            }
+            await emulateCaptureViewport(
+                tab.id,
+                deviceMetrics,
+                screenshotSuffix
+            );
+            return {};
+        }
+
+        case "captureElement": {
+            await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                files: ["contentScripts/elementHighlighter.js"],
+            });
+            await chrome.tabs.sendMessage(tab.id, {
+                action: "sendDeviceMetrics",
+                deviceMetrics,
+                screenshotSuffix,
+            });
+            return {};
+        }
+
+        case "manualCleanup": {
+            await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                files: ["contentScripts/cleanup.js"],
+            });
+            return {};
+        }
+
+        case "autoCapture": {
+            const result = await runAutoCapture({
+                tabId: tab.id,
+                url: tab.url,
+                settings,
+                screenshotSuffix,
+            });
+            return result;
+        }
+
+        case "removeAds": {
+            // Lazy hydrate covers the install→first-click window where
+            // onInstalled's fetch may still be in flight, or the user
+            // hasn't restarted Chrome since enabling the extension.
+            await refreshIfStale();
+            await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                files: ["contentScripts/adRemover.js"],
+            });
+            return {};
+        }
+
+        default:
+            // elementClicked is handled by its own dedicated listener
+            return null;
+    }
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // Only handle the action set this listener owns. Returning false leaves
+    // other listeners (elementClickListener) free to handle their messages
+    // without channel-conflict warnings.
+    const owned = new Set([
+        "getPageHeight",
+        "capturePage",
+        "captureElement",
+        "manualCleanup",
+        "removeAds",
+        "autoCapture",
+    ]);
+    if (!owned.has(request?.action)) return false;
+
+    handleAction(request)
+        .then((result) => sendResponse({ ok: true, ...result }))
+        .catch((error) => {
+            console.error(
+                `Background ${request.action} failed:`,
+                error
+            );
+            sendResponse({
+                ok: false,
+                error: error?.message ?? String(error),
+            });
+        });
+
+    return true; // async response
 });

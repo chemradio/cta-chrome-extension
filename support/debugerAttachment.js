@@ -1,16 +1,55 @@
-export function attachDebugger(tabId) {
+const PROTOCOL_VERSION = "1.3";
+
+// Track tabs this extension has the debugger attached to. The service worker
+// can be terminated between captures, so we also reconcile with onDetach.
+const attached = new Set();
+
+chrome.debugger.onDetach.addListener(({ tabId }) => {
+    if (tabId != null) attached.delete(tabId);
+});
+
+function rawAttach(tabId) {
     return new Promise((resolve, reject) => {
-        chrome.debugger.attach({ tabId }, "1.3", () => {
-            if (chrome.runtime.lastError)
-                return reject(chrome.runtime.lastError);
-            console.log("Debugger attached to tab:", tabId);
+        chrome.debugger.attach({ tabId }, PROTOCOL_VERSION, () => {
+            const err = chrome.runtime.lastError;
+            if (err) return reject(new Error(err.message));
             resolve();
         });
     });
 }
 
-export function detachDebugger(tabId) {
-    chrome.debugger.detach({ tabId }, () => {
-        console.log("Debugger detached from tab:", tabId);
+function rawDetach(tabId) {
+    return new Promise((resolve) => {
+        chrome.debugger.detach({ tabId }, () => {
+            // Swallow lastError — "not attached" is fine, this is teardown.
+            void chrome.runtime.lastError;
+            resolve();
+        });
     });
+}
+
+export async function attachDebugger(tabId) {
+    if (attached.has(tabId)) return;
+    try {
+        await rawAttach(tabId);
+        attached.add(tabId);
+    } catch (err) {
+        // Auto-recover from a leaked attach (prior session that never detached
+        // cleanly — e.g. the service worker was killed mid-capture). Only ever
+        // succeeds if WE owned the prior session; DevTools sessions are
+        // untouchable from here so this can't hijack the user's debugger.
+        if (/already attached/i.test(err.message)) {
+            await rawDetach(tabId);
+            await rawAttach(tabId);
+            attached.add(tabId);
+            return;
+        }
+        throw err;
+    }
+}
+
+export async function detachDebugger(tabId) {
+    if (!attached.has(tabId)) return;
+    await rawDetach(tabId);
+    attached.delete(tabId);
 }

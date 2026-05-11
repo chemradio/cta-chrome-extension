@@ -1,22 +1,36 @@
 (function () {
-    // How long (ms) after the last mutation before we declare the page settled.
-    // Lower = faster captures; higher = safer for slow/animated pages.
-    const DEBOUNCE_MS = 800;
+    // Tear down any previous instance from an earlier injection on this page.
+    // Without this, a leaked observer can fire MUTATIONS_FINISHED later and
+    // resolve the *next* capture's wait prematurely.
+    if (window.__ctaMutationCleanup) {
+        try { window.__ctaMutationCleanup(); } catch {}
+    }
 
-    // Hard deadline — always resolve after this long even if mutations are ongoing
+    const DEBOUNCE_MS = 800;
     const MAX_WAIT_MS = 5000;
 
     let debounceTimer = null;
     let maxWaitTimer = null;
+    let alive = true;
 
-    function done() {
+    function cleanup() {
+        alive = false;
         clearTimeout(debounceTimer);
         clearTimeout(maxWaitTimer);
         observer.disconnect();
+        if (window.__ctaMutationCleanup === cleanup) {
+            delete window.__ctaMutationCleanup;
+        }
+    }
+
+    function done() {
+        if (!alive) return;
+        cleanup();
         chrome.runtime.sendMessage({ type: "MUTATIONS_FINISHED" });
     }
 
     const observer = new MutationObserver(() => {
+        if (!alive) return;
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(done, DEBOUNCE_MS);
     });
@@ -25,8 +39,9 @@
         childList: true,
         subtree: true,
         attributes: true,
-        characterData: false, // characterData changes are too noisy
+        characterData: false, // too noisy
     });
 
     maxWaitTimer = setTimeout(done, MAX_WAIT_MS);
+    window.__ctaMutationCleanup = cleanup;
 })();
