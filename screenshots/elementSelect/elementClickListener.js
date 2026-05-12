@@ -296,16 +296,29 @@ export const addElementClickedListener = () => {
     chrome.runtime.onMessage.addListener((request, sender) => {
         if (request?.action !== "elementClicked") return false;
 
+        // Re-open the popup so element capture has the same "Capturing…"
+        // feedback as page capture. The popup was closed at click-handoff
+        // time (see popup.js) to avoid the two-click trap. We persist a
+        // session flag the popup checks on init; the flag is cleared when
+        // capture finishes (success or failure).
+        chrome.storage.session.set({ elementCaptureInProgress: true });
+        chrome.action.openPopup().catch(() => {});
+
+        const finish = (payload) => {
+            chrome.storage.session.remove("elementCaptureInProgress");
+            broadcastResult(payload);
+        };
+
         captureElement({
             tabId: sender.tab.id,
             xpath: request.xpath,
             deviceMetrics: request.deviceMetrics,
             screenshotSuffix: request.screenshotSuffix,
         })
-            .then(() => broadcastResult({ ok: true }))
+            .then(() => finish({ ok: true }))
             .catch((error) => {
                 console.error("[CTA] Element capture failed:", error);
-                broadcastResult({ ok: false, error: error?.message ?? String(error) });
+                finish({ ok: false, error: error?.message ?? String(error) });
             });
 
         return false;

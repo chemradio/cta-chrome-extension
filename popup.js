@@ -139,10 +139,19 @@ document.getElementById("capture-page").addEventListener("click", () => {
         .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
 });
 
-document.getElementById("capture-element").addEventListener("click", () => {
+document.getElementById("capture-element").addEventListener("click", async () => {
     showCapturing("Select an element", "Move mouse to highlight\nScroll wheel to change depth");
-    sendMessage({ action: "captureElement", settings: getSettings() })
-        .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
+    try {
+        // Await injection so the highlighter is listening before we close the popup.
+        // Closing immediately afterward avoids the two-click trap: if the popup is
+        // open when the user clicks the page, Chrome dismisses the popup and swallows
+        // that first click — it never reaches the highlighter's listener.
+        await sendMessage({ action: "captureElement", settings: getSettings() });
+        window.close();
+    } catch (e) {
+        stopCapturing();
+        setStatus(e.message ?? "Error", "error", 5000);
+    }
 });
 
 document.getElementById("capture-auto").addEventListener("click", () => {
@@ -192,10 +201,18 @@ document.getElementById("manual-cleanup").addEventListener("click", () => {
         .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
 });
 
-document.getElementById("dom-killer").addEventListener("click", () => {
+document.getElementById("dom-killer").addEventListener("click", async () => {
     showCapturing("Manual removal", "Hover to target · Click to remove\nWheel to change depth · ESC to stop");
-    sendMessage({ action: "domKiller" })
-        .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
+    try {
+        // Same one-click fix as capture-element: close the popup once the
+        // content script is listening, so the user's first click on the page
+        // reaches the kill handler instead of being swallowed by popup dismissal.
+        await sendMessage({ action: "domKiller" });
+        window.close();
+    } catch (e) {
+        stopCapturing();
+        setStatus(e.message ?? "Error", "error", 5000);
+    }
 });
 
 // ─── Hidden expert UI: triple-click the header to reveal Export ──────────────
@@ -273,3 +290,13 @@ widthInput.addEventListener("input",  checkCustomResolution);
 heightInput.addEventListener("input", checkCustomResolution);
 
 updateResolutionInputs();
+
+// If the popup was re-opened by the element-click handoff, show the
+// "Capturing…" overlay immediately. The session flag is set in
+// elementClickListener.js and cleared when capture finishes; the
+// elementCaptureResult listener above will then call stopCapturing().
+chrome.storage.session.get("elementCaptureInProgress", (data) => {
+    if (data?.elementCaptureInProgress) {
+        showCapturing("Capturing element…");
+    }
+});
