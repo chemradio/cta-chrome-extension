@@ -175,14 +175,19 @@ chrome.runtime.onMessage.addListener((msg) => {
 document.getElementById("manual-cleanup").addEventListener("click", () => {
     setStatus("Cleaning up…");
     sendMessage({ action: "manualCleanup" })
-        .then(() => setStatus("Cleanup done", "ok", 3000))
-        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
-});
-
-document.getElementById("remove-ads").addEventListener("click", () => {
-    setStatus("Removing ads…");
-    sendMessage({ action: "removeAds" })
-        .then(() => setStatus("Ads removed", "ok", 3000))
+        .then((res) => {
+            const s = res?.stats;
+            if (!s) {
+                setStatus("Cleanup done", "ok", 3000);
+                return;
+            }
+            const { removed = 0, sources = {} } = s;
+            const breakdown =
+                `easylist:${sources.easylist ?? 0} ` +
+                `bundled:${sources.bundled ?? 0} ` +
+                `user:${sources.user ?? 0}`;
+            setStatus(`Removed ${removed} nodes (${breakdown})`, "ok", 5000);
+        })
         .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
 });
 
@@ -190,6 +195,65 @@ document.getElementById("dom-killer").addEventListener("click", () => {
     showCapturing("Manual removal", "Hover to target · Click to remove\nWheel to change depth · ESC to stop");
     sendMessage({ action: "domKiller" })
         .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
+});
+
+// ─── Hidden expert UI: triple-click the header to reveal Export ──────────────
+
+const headerTitle = document.getElementById("header-title");
+const exportBtn   = document.getElementById("export-filters");
+const clearBtn    = document.getElementById("clear-filters");
+let titleClickCount = 0;
+let titleClickTimer = null;
+
+headerTitle.addEventListener("click", () => {
+    titleClickCount++;
+    clearTimeout(titleClickTimer);
+    titleClickTimer = setTimeout(() => { titleClickCount = 0; }, 600);
+    if (titleClickCount >= 3) {
+        titleClickCount = 0;
+        const turnOn = exportBtn.hidden;
+        exportBtn.hidden = !turnOn;
+        clearBtn.hidden  = !turnOn;
+        setStatus(turnOn ? "Expert mode on" : "Expert mode off", "ok", 1500);
+    }
+});
+
+clearBtn.addEventListener("click", () => {
+    const ok = confirm(
+        "Clear all locally-stored user filters?\n\n" +
+        "Selectors you collected via DOM-killer will be removed from this " +
+        "browser. Bundled and EasyList filters are not affected."
+    );
+    if (!ok) return;
+    setStatus("Clearing…");
+    sendMessage({ action: "clearUserFilters" })
+        .then((res) => {
+            const n = res?.selectorCount ?? 0;
+            const h = res?.hostCount ?? 0;
+            setStatus(
+                n === 0
+                    ? "No user filters to clear"
+                    : `Cleared ${n} selectors across ${h} hosts`,
+                "ok",
+                4000
+            );
+        })
+        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+});
+
+exportBtn.addEventListener("click", () => {
+    setStatus("Exporting…");
+    sendMessage({ action: "exportFilters" })
+        .then((res) => {
+            const n = res?.selectorCount ?? 0;
+            const h = res?.hostCount ?? 0;
+            if (n === 0) {
+                setStatus("No user filters to export", "ok", 3000);
+            } else {
+                setStatus(`Exported ${n} selectors across ${h} hosts`, "ok", 4000);
+            }
+        })
+        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
 });
 
 chrome.runtime.onMessage.addListener((msg) => {

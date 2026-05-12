@@ -1,0 +1,5 @@
+{
+    "_comment": "Curated per-host CSS selectors shipped with the extension. Merged with EasyList (adFilters) and userFilters at apply time. Shape mirrors parsed EasyList: { global: [...], domains: { host: [...] } }. Hostname keys are matched suffix-style (news.example.com picks up example.com rules).",
+    "global": [],
+    "domains": {}
+}

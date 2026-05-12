@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -11,9 +11,8 @@
     </head>
     <body>
         <div class="popup">
-
             <header>
-                <span class="header-title">CTA Screenshot Helper</span>
+                <span class="header-title" id="header-title">CTA Screenshot Helper</span>
             </header>
 
             <div id="capture-overlay" class="capture-overlay">
@@ -23,27 +22,61 @@
             </div>
 
             <div class="body">
-
                 <!-- Resolution -->
                 <section>
                     <div class="section-label">Resolution</div>
                     <div class="radio-group" id="layout-group">
-                        <input type="radio" id="horizontal" name="layout" value="horizontal" />
+                        <input
+                            type="radio"
+                            id="horizontal"
+                            name="layout"
+                            value="horizontal"
+                        />
                         <label for="horizontal">Horizontal</label>
 
-                        <input type="radio" id="vertical" name="layout" value="vertical" checked />
+                        <input
+                            type="radio"
+                            id="vertical"
+                            name="layout"
+                            value="vertical"
+                            checked
+                        />
                         <label for="vertical">Vertical</label>
 
-                        <input type="radio" id="fullpage" name="layout" value="fullpage" />
+                        <input
+                            type="radio"
+                            id="fullpage"
+                            name="layout"
+                            value="fullpage"
+                        />
                         <label for="fullpage">Full Page</label>
 
-                        <input type="radio" id="custom" name="layout" value="custom" />
+                        <input
+                            type="radio"
+                            id="custom"
+                            name="layout"
+                            value="custom"
+                        />
                         <label for="custom" class="custom-label">Custom</label>
                     </div>
                     <div class="resolution-row">
-                        <input type="number" id="width"  placeholder="Width"  min="300" max="9999" value="1920" />
+                        <input
+                            type="number"
+                            id="width"
+                            placeholder="Width"
+                            min="300"
+                            max="9999"
+                            value="1920"
+                        />
                         <span class="resolution-x">×</span>
-                        <input type="number" id="height" placeholder="Height" min="300" max="9999" value="7000" />
+                        <input
+                            type="number"
+                            id="height"
+                            placeholder="Height"
+                            min="300"
+                            max="9999"
+                            value="7000"
+                        />
                         <span class="resolution-px">px</span>
                     </div>
                 </section>
@@ -54,16 +87,27 @@
                 <section>
                     <div class="section-label">Scale</div>
                     <div class="radio-group">
-                        <input type="radio" id="onex"   name="scale" value="1" />
+                        <input type="radio" id="onex" name="scale" value="1" />
                         <label for="onex">1×</label>
 
-                        <input type="radio" id="twox"   name="scale" value="2" checked />
+                        <input
+                            type="radio"
+                            id="twox"
+                            name="scale"
+                            value="2"
+                            checked
+                        />
                         <label for="twox">2×</label>
 
-                        <input type="radio" id="threex" name="scale" value="3" />
+                        <input
+                            type="radio"
+                            id="threex"
+                            name="scale"
+                            value="3"
+                        />
                         <label for="threex">3×</label>
 
-                        <input type="radio" id="fourx"  name="scale" value="4" />
+                        <input type="radio" id="fourx" name="scale" value="4" />
                         <label for="fourx">4×</label>
                     </div>
                 </section>
@@ -76,7 +120,9 @@
                         <input type="checkbox" id="cleanup" checked />
                         <span>Cleanup before capture</span>
                     </label>
-                    <button id="manual-cleanup" class="btn-ghost">Manual</button>
+                    <button id="manual-cleanup" class="btn-ghost">
+                        Manual
+                    </button>
                 </section>
 
                 <div class="divider"></div>
@@ -84,21 +130,41 @@
                 <!-- Helpers -->
                 <section>
                     <div class="section-label">Helpers</div>
-                    <button id="remove-ads" class="btn-helper">Remove ADs</button>
-                    <button id="dom-killer" class="btn-helper btn-helper--danger">Manual</button>
+                    <button
+                        id="dom-killer"
+                        class="btn-helper btn-helper--danger"
+                    >
+                        Remove Elements
+                    </button>
+                    <button
+                        id="export-filters"
+                        class="btn-helper btn-helper--expert"
+                        hidden
+                    >
+                        Export Filters
+                    </button>
+                    <button
+                        id="clear-filters"
+                        class="btn-helper btn-helper--expert"
+                        hidden
+                    >
+                        Clear User Filters
+                    </button>
                 </section>
-
             </div>
 
             <!-- Actions -->
             <div class="actions">
-                <button id="capture-page" class="btn-primary">Capture Page</button>
-                <button id="capture-element" class="btn-secondary">Capture Element</button>
+                <button id="capture-page" class="btn-primary">
+                    Capture Page
+                </button>
+                <button id="capture-element" class="btn-secondary">
+                    Capture Element
+                </button>
                 <button id="capture-auto" class="btn-secondary">Auto</button>
             </div>
 
             <div id="status" class="status"></div>
-
         </div>
 
         <script src="popup.js"></script>

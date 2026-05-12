@@ -1,32 +1,60 @@
+// IIFE result is awaited by chrome.scripting.executeScript and returned as
+// results[0].result — we use that to surface a removed-node count back to
+// the popup status bar.
 (async () => {
-    if (window.__ctaAdRemoverRunning) return;
+    if (window.__ctaAdRemoverRunning) return { removed: 0, selectors: 0, skipped: true };
     window.__ctaAdRemoverRunning = true;
 
     try {
-        const { adFilters } = await chrome.storage.local.get("adFilters");
+        const { adFilters, bundledFilters, userFilters } =
+            await chrome.storage.local.get([
+                "adFilters",
+                "bundledFilters",
+                "userFilters",
+            ]);
         if (!adFilters) {
             console.warn(
-                "[CTA] AdRemover: no filters in storage yet. Background " +
-                    "should have hydrated them — reopen the popup and retry."
+                "[CTA] AdRemover: no EasyList in storage yet. Background " +
+                    "should have hydrated it — reopen the popup and retry."
             );
-            return;
         }
 
         const hostname = location.hostname.toLowerCase();
-        const matchedDomainKeys = Object.keys(adFilters.domains).filter((d) =>
-            domainMatches(hostname, d)
-        );
-        const selectors = [
-            ...adFilters.global,
-            ...matchedDomainKeys.flatMap((k) => adFilters.domains[k]),
-        ];
+
+        const adDomains      = adFilters?.domains ?? {};
+        const bundledDomains = bundledFilters?.domains ?? {};
+        const userMap        = userFilters ?? {};
+
+        const matchedAd      = Object.keys(adDomains).filter((d) => domainMatches(hostname, d));
+        const matchedBundled = Object.keys(bundledDomains).filter((d) => domainMatches(hostname, d));
+        const matchedUser    = Object.keys(userMap).filter((d) => domainMatches(hostname, d));
+
+        // Dedupe so a selector that exists in both bundled and user lists is
+        // only applied once (user said: "duplicates handled once").
+        const selectors = Array.from(new Set([
+            ...(adFilters?.global ?? []),
+            ...(bundledFilters?.global ?? []),
+            ...matchedAd.flatMap((k) => adDomains[k]),
+            ...matchedBundled.flatMap((k) => bundledDomains[k]),
+            ...matchedUser.flatMap((k) => userMap[k]),
+        ]));
 
         const removed = applySelectors(selectors);
         console.log(
             `[CTA] AdRemover: removed ${removed} node(s) using ` +
                 `${selectors.length} selectors ` +
-                `(${matchedDomainKeys.length} domain-scoped lists matched)`
+                `(easylist:${matchedAd.length} bundled:${matchedBundled.length} ` +
+                `user:${matchedUser.length})`
         );
+        return {
+            removed,
+            selectors: selectors.length,
+            sources: {
+                easylist: matchedAd.length,
+                bundled:  matchedBundled.length,
+                user:     matchedUser.length,
+            },
+        };
     } finally {
         delete window.__ctaAdRemoverRunning;
     }

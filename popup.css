@@ -304,6 +304,22 @@ button:active {
     color: #FF0055;
 }
 
+.btn-helper--expert {
+    color: var(--text-muted);
+    border-style: dashed;
+    border-color: var(--text-muted);
+}
+
+.btn-helper--expert:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.header-title {
+    cursor: default;
+    user-select: none;
+}
+
 /* ── Status bar ────────────────────────────────────── */
 
 .status {
