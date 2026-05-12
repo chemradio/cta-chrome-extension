@@ -13,6 +13,23 @@
 
     const STYLE_ID = "__cta-hl-style";
 
+    // Hover is committed only after the pointer has moved at least this many px
+    // from the last committed position AND been still for HOVER_DEBOUNCE_MS.
+    // Keeps hand tremor from jumping the selection.
+    const MOVEMENT_THRESHOLD = 8;
+    const HOVER_DEBOUNCE_MS  = 100;
+    // After a wheel event, hover updates are frozen for this long so the user
+    // doesn't need to hold the mouse perfectly still while scrolling the tree.
+    const SCROLL_LOCK_MS     = 400;
+
+    let lastCommittedX   = -9999;
+    let lastCommittedY   = -9999;
+    let pendingX         = 0;
+    let pendingY         = 0;
+    let hoverDebounceTimer = null;
+    let scrollLockTimer    = null;
+    let isScrollLocked     = false;
+
     // ─── Receive device metrics sent by background after injection ────────────
 
     const metricsListener = (message) => {
@@ -83,28 +100,44 @@
 
     // ─── Event handlers ───────────────────────────────────────────────────────
 
-    function onMouseOver(e) {
-        const target = e.target;
-        if (
-            target &&
-            target !== document.documentElement &&
-            target !== document.body
-        ) {
-            highlight(target);
-        }
-        e.stopPropagation();
-    }
+    function onMouseMove(e) {
+        // Always track position so the post-lock threshold is relative to
+        // where the mouse actually is when the lock expires.
+        pendingX = e.clientX;
+        pendingY = e.clientY;
 
-    function onMouseOut(e) {
-        if (e.target && e.target !== currentElement) {
-            e.target.classList.remove("__cta-highlighted");
-        }
+        if (isScrollLocked) return;
+
+        const dx = e.clientX - lastCommittedX;
+        const dy = e.clientY - lastCommittedY;
+        if (Math.sqrt(dx * dx + dy * dy) < MOVEMENT_THRESHOLD) return;
+
+        clearTimeout(hoverDebounceTimer);
+        hoverDebounceTimer = setTimeout(() => {
+            const el = document.elementFromPoint(pendingX, pendingY);
+            if (el && el !== document.documentElement && el !== document.body) {
+                highlight(el);
+                lastCommittedX = pendingX;
+                lastCommittedY = pendingY;
+            }
+        }, HOVER_DEBOUNCE_MS);
     }
 
     function onWheel(e) {
         e.preventDefault();
         e.stopPropagation();
         if (!currentElement) return;
+
+        // Freeze hover tracking while the user scrolls the DOM tree.
+        isScrollLocked = true;
+        clearTimeout(scrollLockTimer);
+        scrollLockTimer = setTimeout(() => {
+            isScrollLocked = false;
+            // Anchor threshold to current mouse position so a small drift to
+            // click doesn't overwrite the scroll-navigated element.
+            lastCommittedX = pendingX;
+            lastCommittedY = pendingY;
+        }, SCROLL_LOCK_MS);
 
         if (e.deltaY < 0) {
             // Scroll up → parent element
@@ -146,8 +179,9 @@
     // ─── Cleanup ──────────────────────────────────────────────────────────────
 
     function destroy() {
-        document.removeEventListener("mouseover", onMouseOver, true);
-        document.removeEventListener("mouseout", onMouseOut, true);
+        clearTimeout(hoverDebounceTimer);
+        clearTimeout(scrollLockTimer);
+        document.removeEventListener("mousemove", onMouseMove, true);
         document.removeEventListener("click", onClick, true);
         document.removeEventListener("wheel", onWheel, true);
         chrome.runtime.onMessage.removeListener(metricsListener);
@@ -165,8 +199,7 @@
 
     // ─── Attach (capture phase so we intercept before page handlers) ──────────
 
-    document.addEventListener("mouseover", onMouseOver, { capture: true });
-    document.addEventListener("mouseout", onMouseOut, { capture: true });
+    document.addEventListener("mousemove", onMouseMove, { capture: true });
     document.addEventListener("click", onClick, { capture: true });
     document.addEventListener("wheel", onWheel, { capture: true, passive: false });
 })();
