@@ -309,3 +309,67 @@ button:active {
 .status.ok    { color: var(--accent); }
 .status.error { color: var(--danger); }
 .status.busy  { color: var(--text-muted); }
+
+/* ── Capture overlay ───────────────────────────────── */
+
+.capture-overlay {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 36px 12px;
+}
+
+.popup.is-capturing .capture-overlay { display: flex; }
+.popup.is-capturing .body            { display: none; }
+.popup.is-capturing .actions         { display: none; }
+.popup.is-capturing .status          { display: none; }
+
+.capture-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    position: relative;
+}
+
+.capture-ring::before,
+.capture-ring::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    animation: ring-expand 1.8s ease-out infinite;
+    opacity: 0;
+}
+
+.capture-ring::after {
+    animation-delay: 0.7s;
+}
+
+@keyframes ring-expand {
+    0%   { transform: scale(1);    opacity: 0.65; }
+    100% { transform: scale(2.2);  opacity: 0;    }
+}
+
+.capture-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.capture-hint {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--border);
+    letter-spacing: 0.02em;
+    text-align: center;
+    line-height: 1.6;
+    white-space: pre-line;
+    margin-top: -8px;
+}

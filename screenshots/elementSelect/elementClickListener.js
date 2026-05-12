@@ -305,10 +305,7 @@ export const addElementClickedListener = () => {
             .then(() => broadcastResult({ ok: true }))
             .catch((error) => {
                 console.error("[CTA] Element capture failed:", error);
-                broadcastResult({
-                    ok: false,
-                    error: error?.message ?? String(error),
-                });
+                broadcastResult({ ok: false, error: error?.message ?? String(error) });
             });
 
         return false;

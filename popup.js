@@ -1,7 +1,10 @@
-const layoutInputs = document.querySelectorAll('input[name="layout"]');
-const widthInput   = document.getElementById("width");
-const heightInput  = document.getElementById("height");
-const statusEl     = document.getElementById("status");
+const layoutInputs   = document.querySelectorAll('input[name="layout"]');
+const widthInput     = document.getElementById("width");
+const heightInput    = document.getElementById("height");
+const statusEl       = document.getElementById("status");
+const popupEl        = document.querySelector(".popup");
+const captureLabelEl = document.getElementById("capture-label");
+const captureHintEl  = document.getElementById("capture-hint");
 
 const presets = {
     horizontal: { width: 1920, height: 1080 },
@@ -9,6 +12,19 @@ const presets = {
     fullpage:   { width: 1920, height: null },
     custom:     null,
 };
+
+// ─── Capture overlay ──────────────────────────────────────────────────────────
+
+function showCapturing(label, hint = "") {
+    captureLabelEl.textContent = label;
+    captureHintEl.textContent  = hint;
+    captureHintEl.hidden       = !hint;
+    popupEl.classList.add("is-capturing");
+}
+
+function stopCapturing() {
+    popupEl.classList.remove("is-capturing");
+}
 
 // ─── Status helper ────────────────────────────────────────────────────────────
 
@@ -116,22 +132,23 @@ const sendMessage = (message) =>
 // ─── Button handlers ──────────────────────────────────────────────────────────
 
 document.getElementById("capture-page").addEventListener("click", () => {
-    setStatus("Capturing page…");
+    showCapturing("Capturing page…");
     sendMessage({ action: "capturePage", settings: getSettings() })
-        .then(() => setStatus("Done — check Downloads", "ok", 4000))
-        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+        .then(() => { stopCapturing(); setStatus("Done — check Downloads", "ok", 4000); })
+        .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
 });
 
 document.getElementById("capture-element").addEventListener("click", () => {
-    setStatus("Click an element on the page…", "busy");
+    showCapturing("Select an element", "Move mouse to highlight\nScroll wheel to change depth");
     sendMessage({ action: "captureElement", settings: getSettings() })
-        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+        .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
 });
 
 document.getElementById("capture-auto").addEventListener("click", () => {
-    setStatus("Auto-capturing…");
+    showCapturing("Auto-capturing…");
     sendMessage({ action: "autoCapture", settings: getSettings() })
         .then((res) => {
+            stopCapturing();
             const label =
                 res?.mode === "element"
                     ? `Auto: captured ${res.module} post`
@@ -140,14 +157,13 @@ document.getElementById("capture-auto").addEventListener("click", () => {
                     : "Auto: full page (no site module)";
             setStatus(`${label} — check Downloads`, "ok", 4000);
         })
-        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+        .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
 });
 
-// Element capture happens asynchronously after the user clicks something on
-// the page. The element listener broadcasts the final result here so the
-// popup status reflects what actually happened.
+// Element capture result — fires if the popup is still open when capture ends.
 chrome.runtime.onMessage.addListener((msg) => {
     if (msg?.action !== "elementCaptureResult") return false;
+    stopCapturing();
     if (msg.ok) {
         setStatus("Done — check Downloads", "ok", 4000);
     } else {
