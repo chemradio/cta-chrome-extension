@@ -2,7 +2,7 @@ import {
     attachDebugger,
     detachDebugger,
 } from "../support/debugerAttachment.js";
-import { enableEmulation } from "./emulation/emulationEnabler.js";
+import { enableEmulation, clearEmulation } from "./emulation/emulationEnabler.js";
 import {
     injectMutationWatcher,
     waitForMutationSettle,
@@ -46,6 +46,7 @@ export const withEmulatedCapture = async (tabId, deviceMetrics, body) => {
         return await body();
     } finally {
         await restoreScrollbars(tabId);
+        await clearEmulation(tabId);
         await detachDebugger(tabId);
     }
 };

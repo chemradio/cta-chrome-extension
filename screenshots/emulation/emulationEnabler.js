@@ -13,3 +13,18 @@ export function enableEmulation(tabId, deviceMetrics) {
         );
     });
 }
+
+export function clearEmulation(tabId) {
+    return new Promise((resolve) => {
+        chrome.debugger.sendCommand(
+            { tabId },
+            "Emulation.clearDeviceMetricsOverride",
+            {},
+            () => {
+                // Swallow errors — if the debugger is already gone this is a no-op.
+                void chrome.runtime.lastError;
+                resolve();
+            }
+        );
+    });
+}
