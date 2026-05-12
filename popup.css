@@ -294,6 +294,16 @@ button:active {
     color: var(--accent);
 }
 
+.btn-helper--danger {
+    color: #FF0055;
+    border-color: #FF005540;
+}
+
+.btn-helper--danger:hover {
+    border-color: #FF0055;
+    color: #FF0055;
+}
+
 /* ── Status bar ────────────────────────────────────── */
 
 .status {

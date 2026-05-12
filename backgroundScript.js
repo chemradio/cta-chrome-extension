@@ -144,6 +144,14 @@ async function handleAction(request) {
             return {};
         }
 
+        case "domKiller": {
+            await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                files: ["contentScripts/domKiller.js"],
+            });
+            return {};
+        }
+
         default:
             // elementClicked is handled by its own dedicated listener
             return null;
@@ -161,6 +169,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         "manualCleanup",
         "removeAds",
         "autoCapture",
+        "domKiller",
+        "domKillerEnded",
     ]);
     if (!owned.has(request?.action)) return false;
 

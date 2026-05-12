@@ -186,6 +186,19 @@ document.getElementById("remove-ads").addEventListener("click", () => {
         .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
 });
 
+document.getElementById("dom-killer").addEventListener("click", () => {
+    showCapturing("Manual removal", "Hover to target · Click to remove\nWheel to change depth · ESC to stop");
+    sendMessage({ action: "domKiller" })
+        .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
+});
+
+chrome.runtime.onMessage.addListener((msg) => {
+    if (msg?.action !== "domKillerEnded") return false;
+    stopCapturing();
+    setStatus("Manual removal stopped", "ok", 3000);
+    return false;
+});
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 layoutInputs.forEach((input) =>
