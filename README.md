@@ -1,6 +1,6 @@
-# CTA Screenshot Helper
+# Screenshot Helper Extension for Chrome
 
-Chrome extension for capturing high-resolution, clean screenshots of web pages and individual elements. Built for MotionGFX / CTA asset creation.
+Chrome extension for capturing high-resolution, clean screenshots of web pages and individual elements. Built for MotionGFX / asset creation.
 
 ## Features
 
@@ -22,6 +22,7 @@ Chrome extension for capturing high-resolution, clean screenshots of web pages a
 ### Popup controls
 
 **Layout & Resolution**
+
 - `Horizontal` — 1920×1080
 - `Vertical` — 1920×7000
 - `Full Page` — 1920 × auto-detected page height (up to 9999px)
@@ -32,19 +33,24 @@ Chrome extension for capturing high-resolution, clean screenshots of web pages a
 **Cleanup** — when checked, runs site-specific cleanup (removes nav bars, sidebars, comment UI, etc.) before the screenshot is taken.
 
 ### Capture Page
+
 Takes a full-page screenshot at the configured resolution and scale. Downloads as `page-{domain}-{timestamp}.png`.
 
 ### Capture Single Element
+
 1. Click **Capture Single Element** — the cursor changes and elements glow cyan on hover
 2. Hover over the element you want
 3. Use the **scroll wheel** to move up (parent) or down (first child) in the DOM tree
 4. **Click** to capture — downloads as `element-{domain}-{timestamp}.png`
 
 ### Manual Cleanup
+
 Runs the cleanup script for the current site without taking a screenshot. Useful for previewing what gets removed.
 
 ### Context menu
+
 Right-click anywhere on a page:
+
 - **Element Screenshot** — starts element selection (same as popup button, uses 1920×1080 @ 2x)
 - **Screenshot: FullHD x2** — full page at 1920×1080 @ 2x
 - **Screenshot: Vertical 5k x2 / x4** — full page at 1920×5000
@@ -53,12 +59,12 @@ Right-click anywhere on a page:
 
 ## Supported cleanup sites
 
-| Site | What's removed |
-|------|---------------|
-| facebook.com | Top navigation banner, sticky wrappers, voice comment toolbar |
-| instagram.com | Comment sidebar panel, "comment as" section |
-| t.me (Telegram) | Avatar, bubble tail, border/padding from message widget |
-| x.com | Trending sidebar, account menu, floating sidebar panels |
+| Site            | What's removed                                                |
+| --------------- | ------------------------------------------------------------- |
+| facebook.com    | Top navigation banner, sticky wrappers, voice comment toolbar |
+| instagram.com   | Comment sidebar panel, "comment as" section                   |
+| t.me (Telegram) | Avatar, bubble tail, border/padding from message widget       |
+| x.com           | Trending sidebar, account menu, floating sidebar panels       |
 
 ## How it works
 

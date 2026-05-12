@@ -8,6 +8,7 @@ const captureHintEl  = document.getElementById("capture-hint");
 
 const presets = {
     horizontal: { width: 1920, height: 1080 },
+    horizontal4k: { width: 3840, height: 2160 },
     vertical:   { width: 1920, height: 7000 },
     fullpage:   { width: 1920, height: null },
     custom:     null,

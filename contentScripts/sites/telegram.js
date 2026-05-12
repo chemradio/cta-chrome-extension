@@ -22,30 +22,43 @@
         ".tgme_header_right_column",
     ];
 
-    const matchAny = (selectors) =>
-        selectors.some((s) => document.querySelector(s));
+    const firstMatch = (selectors) => {
+        for (const s of selectors) {
+            try {
+                if (document.querySelector(s)) return s;
+            } catch {}
+        }
+        return null;
+    };
 
+    let detectorHit = null;
     const getPageType = () => {
-        if (matchAny(PROFILE_DETECTORS)) return "profile";
-        if (matchAny(POST_DETECTORS) || document.querySelector("iframe"))
-            return "post";
+        let s;
+        if ((s = firstMatch(PROFILE_DETECTORS))) { detectorHit = s; return "profile"; }
+        if ((s = firstMatch(POST_DETECTORS)))    { detectorHit = s; return "post"; }
+        if (document.querySelector("iframe"))    { detectorHit = "iframe"; return "post"; }
         return "unknown";
     };
 
+    // Returns { iframe, sameOrigin, removed } so the caller can log why a strip
+    // may have been a no-op (cross-origin) vs. selectors actually rotting.
     const stripIframeChrome = () => {
         const iframe = document.querySelector("iframe");
-        if (!iframe) return null;
+        if (!iframe) return { iframe: null, sameOrigin: false, removed: 0 };
 
         let doc;
         try {
             doc = iframe.contentWindow?.document;
         } catch {
-            return iframe; // cross-origin — still target the iframe as-is
+            return { iframe, sameOrigin: false, removed: 0 };
         }
-        if (!doc) return iframe;
+        if (!doc) return { iframe, sameOrigin: false, removed: 0 };
 
-        doc.querySelector(".tgme_widget_message_user")?.remove();
-        doc.querySelector(".tgme_widget_message_bubble_tail")?.remove();
+        let removed = 0;
+        const user = doc.querySelector(".tgme_widget_message_user");
+        if (user) { user.remove(); removed++; }
+        const tail = doc.querySelector(".tgme_widget_message_bubble_tail");
+        if (tail) { tail.remove(); removed++; }
 
         const bubble = doc.querySelector(".tgme_widget_message_bubble");
         if (bubble) {
@@ -64,16 +77,22 @@
                 el.style.border = "0";
             });
 
-        return iframe;
+        return { iframe, sameOrigin: true, removed };
     };
 
     window.__ctaAutoCapturePending = (async () => {
         try {
             const pageType = getPageType();
-            console.log(`[CTA Auto/telegram] page=${pageType}`);
+            console.log(
+                `[CTA Auto/telegram] page=${pageType} via=${detectorHit ?? "none"}`
+            );
 
             if (pageType === "post") {
-                const iframe = stripIframeChrome();
+                const { iframe, sameOrigin, removed } = stripIframeChrome();
+                console.log(
+                    `[CTA Auto/telegram] iframe=${!!iframe} sameOrigin=${sameOrigin} stripped=${removed}`
+                );
+                console.log(`[CTA Auto/telegram] target=${iframe ? "iframe" : "MISS"}`);
                 if (iframe)
                     return {
                         mode: "element",

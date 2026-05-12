@@ -36,50 +36,65 @@
     ];
 
     const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-    const matchAny = (selectors) =>
-        selectors.some((s) => document.querySelector(s));
+    const firstMatch = (selectors) => {
+        for (const s of selectors) {
+            try {
+                if (document.querySelector(s)) return s;
+            } catch {}
+        }
+        return null;
+    };
 
     const isLoggedIn = () =>
         !document.querySelector('input[name="email"]') &&
         !document.querySelector('input[name="pass"]');
 
+    let detectorHit = null;
     const getPageType = () => {
-        if (matchAny(GROUP_POST_DETECTORS)) return "groupPost";
-        if (matchAny(PROFILE_DETECTORS)) return "profile";
-        if (matchAny(STORY_DETECTORS)) return "story";
-        if (matchAny(POST_DETECTORS)) return "post";
+        let s;
+        if ((s = firstMatch(GROUP_POST_DETECTORS))) { detectorHit = s; return "groupPost"; }
+        if ((s = firstMatch(PROFILE_DETECTORS)))    { detectorHit = s; return "profile"; }
+        if ((s = firstMatch(STORY_DETECTORS)))      { detectorHit = s; return "story"; }
+        if ((s = firstMatch(POST_DETECTORS)))       { detectorHit = s; return "post"; }
         return "unknown";
     };
 
-    const removeSeeMore = () => {
-        for (const selector of SEE_MORE_SELECTORS) {
-            document.querySelectorAll(selector).forEach((el) => el.remove());
+    const removeBySelectors = (selectors) => {
+        let n = 0;
+        for (const selector of selectors) {
+            const matches = document.querySelectorAll(selector);
+            n += matches.length;
+            matches.forEach((el) => el.remove());
         }
+        return n;
     };
+    const removeSeeMore = () => removeBySelectors(SEE_MORE_SELECTORS);
 
     // Comment-As toolbar: walk up 8 levels from the "Available Voices" anchor
     // to the wrapper section. The legacy depth was 8 parents and the section
     // structure hasn't changed.
     const removeCommentAs = () => {
-        document
-            .querySelectorAll('[aria-label="Available Voices"]')
-            .forEach((el) => {
-                let ancestor = el;
-                for (let i = 0; i < 8 && ancestor.parentElement; i++) {
-                    ancestor = ancestor.parentElement;
-                }
-                ancestor.remove();
-            });
+        const anchors = document.querySelectorAll('[aria-label="Available Voices"]');
+        anchors.forEach((el) => {
+            let ancestor = el;
+            for (let i = 0; i < 8 && ancestor.parentElement; i++) {
+                ancestor = ancestor.parentElement;
+            }
+            ancestor.remove();
+        });
+        return anchors.length;
     };
 
     const removeBanner = () => {
-        document.querySelector('[role="banner"]')?.remove();
+        const banner = document.querySelector('[role="banner"]');
+        banner?.remove();
         const main = document.querySelector('[role="main"]');
-        if (!main) return;
+        if (!main) return banner ? 1 : 0;
         let el = main;
         for (let i = 0; i < 4 && el.parentElement; i++) el = el.parentElement;
         el.style.position = "relative";
         el.style.top = "0px";
+        return banner ? 1 : 0;
     };
 
     const getDialogPostLogged = () => {
@@ -128,39 +143,49 @@
             document.body.style.fontFamily = "'Roboto', sans-serif";
             const pageType = getPageType();
             const logged = isLoggedIn();
-            console.log(`[CTA Auto/facebook] page=${pageType} logged=${logged}`);
+            console.log(
+                `[CTA Auto/facebook] page=${pageType} via=${detectorHit ?? "none"} logged=${logged}`
+            );
 
             if (pageType === "groupPost") {
-                removeCommentAs();
-                removeSeeMore();
+                const commentAs = removeCommentAs();
+                const seeMore = removeSeeMore();
+                console.log(`[CTA Auto/facebook] cleanup: COMMENT_AS=${commentAs} SEE_MORE=${seeMore}`);
                 const el = getGroupPost();
+                console.log(`[CTA Auto/facebook] target=${el ? "groupPost" : "MISS"}`);
                 if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
             }
 
             if (pageType === "story") {
                 const el = await getStoryElement();
+                console.log(`[CTA Auto/facebook] target=${el ? "story" : "MISS"}`);
                 if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
             }
 
             if (pageType === "post") {
-                removeSeeMore();
+                const seeMore = removeSeeMore();
                 if (logged) {
-                    removeCommentAs();
-                    const el =
-                        getDialogPostLogged() ||
-                        getVideoPost() ||
-                        getGroupPost();
+                    const commentAs = removeCommentAs();
+                    console.log(`[CTA Auto/facebook] cleanup: COMMENT_AS=${commentAs} SEE_MORE=${seeMore}`);
+                    let el = getDialogPostLogged();
+                    let strat = el ? "dialogLogged" : null;
+                    if (!el) { el = getVideoPost(); if (el) strat = "video"; }
+                    if (!el) { el = getGroupPost(); if (el) strat = "groupPost"; }
+                    console.log(`[CTA Auto/facebook] target=${strat ?? "MISS"}`);
                     if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
                 } else {
+                    console.log(`[CTA Auto/facebook] cleanup: SEE_MORE=${seeMore}`);
                     const el = getDialogPostUnlogged();
+                    console.log(`[CTA Auto/facebook] target=${el ? "dialogUnlogged" : "MISS"}`);
                     if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
                 }
             }
 
             if (pageType === "profile") {
-                removeBanner();
-                removeCommentAs();
-                removeSeeMore();
+                const banner = removeBanner();
+                const commentAs = removeCommentAs();
+                const seeMore = removeSeeMore();
+                console.log(`[CTA Auto/facebook] cleanup: BANNER=${banner} COMMENT_AS=${commentAs} SEE_MORE=${seeMore}`);
                 document.body.style.zoom = "120%";
                 return { mode: "page" };
             }

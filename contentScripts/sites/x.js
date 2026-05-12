@@ -24,27 +24,42 @@
         '[aria-label="Profile timelines"]',
     ];
 
+    const firstMatch = (selectors) => {
+        for (const s of selectors) {
+            try {
+                if (document.querySelector(s)) return s;
+            } catch {}
+        }
+        return null;
+    };
+
+    let detectorHit = null;
+    let targetSelector = null;
     const getPageType = () => {
-        if (PROFILE_DETECTORS.some((s) => document.querySelector(s)))
-            return "profile";
-        if (
-            POST_SELECTORS.some((s) => document.querySelector(s)) ||
-            document.querySelector('[aria-label="Timeline: Conversation"]')
-        )
+        let s;
+        if ((s = firstMatch(PROFILE_DETECTORS))) { detectorHit = s; return "profile"; }
+        if ((s = firstMatch(POST_SELECTORS)))    { detectorHit = s; return "post"; }
+        if (document.querySelector('[aria-label="Timeline: Conversation"]')) {
+            detectorHit = '[aria-label="Timeline: Conversation"]';
             return "post";
+        }
         return "unknown";
     };
 
     const removePersonal = () => {
+        let n = 0;
         for (const selector of PERSONAL_SELECTORS) {
-            document.querySelectorAll(selector).forEach((el) => el.remove());
+            const matches = document.querySelectorAll(selector);
+            n += matches.length;
+            matches.forEach((el) => el.remove());
         }
+        return n;
     };
 
     const getPostElement = () => {
         for (const selector of POST_SELECTORS) {
             const el = document.querySelector(selector);
-            if (el) return el;
+            if (el) { targetSelector = selector; return el; }
         }
         return null;
     };
@@ -52,13 +67,15 @@
     window.__ctaAutoCapturePending = (async () => {
         try {
             const pageType = getPageType();
-            console.log(`[CTA Auto/x] page=${pageType}`);
+            console.log(`[CTA Auto/x] page=${pageType} via=${detectorHit ?? "none"}`);
 
-            removePersonal();
+            const personal = removePersonal();
+            console.log(`[CTA Auto/x] cleanup: PERSONAL=${personal}`);
 
             if (pageType === "post") {
                 window.scrollTo(0, 0);
                 const el = getPostElement();
+                console.log(`[CTA Auto/x] target=${el ? `post via=${targetSelector}` : "MISS"}`);
                 if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
             }
             if (pageType === "profile") {

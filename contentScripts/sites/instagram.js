@@ -21,26 +21,29 @@
     ];
 
     const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-    const matchAny = (selectors) =>
-        selectors.some((s) => {
+    const firstMatch = (selectors) => {
+        for (const s of selectors) {
             try {
-                return !!document.querySelector(s);
-            } catch {
-                return false;
-            }
-        });
+                if (document.querySelector(s)) return s;
+            } catch {}
+        }
+        return null;
+    };
 
+    let detectorHit = null;
+    let targetSelector = null;
     const getPageType = () => {
-        if (matchAny(POST_DETECTORS)) return "post";
-        if (matchAny(STORY_DETECTORS)) return "story";
-        if (matchAny(PROFILE_DETECTORS)) return "profile";
+        let s;
+        if ((s = firstMatch(POST_DETECTORS)))    { detectorHit = s; return "post"; }
+        if ((s = firstMatch(STORY_DETECTORS)))   { detectorHit = s; return "story"; }
+        if ((s = firstMatch(PROFILE_DETECTORS))) { detectorHit = s; return "profile"; }
         return "unknown";
     };
 
     const removeObscuring = () => {
-        document
-            .querySelectorAll('[class="x1n2onr6 xzkaem6"]')
-            .forEach((el) => el.remove());
+        const matches = document.querySelectorAll('[class="x1n2onr6 xzkaem6"]');
+        matches.forEach((el) => el.remove());
+        return matches.length;
     };
 
     const getPostElement = () => {
@@ -48,6 +51,7 @@
             try {
                 const post = document.querySelector(selector);
                 if (post) {
+                    targetSelector = selector;
                     post.style.border = "0px";
                     if (post.firstElementChild) {
                         post.firstElementChild.style.border = "0px";
@@ -79,7 +83,7 @@
         ];
         for (const selector of storySelectors) {
             const el = document.querySelector(selector);
-            if (el) return el;
+            if (el) { targetSelector = selector; return el; }
         }
         return null;
     };
@@ -104,16 +108,21 @@
     window.__ctaAutoCapturePending = (async () => {
         try {
             document.body.style.fontFamily = "'Roboto', sans-serif";
-            removeObscuring();
+            const obscuring = removeObscuring();
             const pageType = getPageType();
-            console.log(`[CTA Auto/instagram] page=${pageType}`);
+            console.log(
+                `[CTA Auto/instagram] page=${pageType} via=${detectorHit ?? "none"}`
+            );
+            console.log(`[CTA Auto/instagram] cleanup: OBSCURING=${obscuring}`);
 
             if (pageType === "post") {
                 const el = getPostElement();
+                console.log(`[CTA Auto/instagram] target=${el ? `post via=${targetSelector}` : "MISS"}`);
                 if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
             }
             if (pageType === "story") {
                 const el = await getStoryElement();
+                console.log(`[CTA Auto/instagram] target=${el ? `story via=${targetSelector}` : "MISS"}`);
                 if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
             }
             if (pageType === "profile") {

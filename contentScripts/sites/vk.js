@@ -29,24 +29,37 @@
         '[id="box_layer_wrap"]',
     ];
 
+    const firstMatch = (selectors) => {
+        for (const s of selectors) {
+            try {
+                if (document.querySelector(s)) return s;
+            } catch {}
+        }
+        return null;
+    };
+
+    let detectorHit = null;
+    let targetSelector = null;
     const getPageType = () => {
-        if (POST_DETECTORS.some((s) => document.querySelector(s)))
-            return "post";
-        if (PROFILE_DETECTORS.some((s) => document.querySelector(s)))
-            return "profile";
+        let s;
+        if ((s = firstMatch(POST_DETECTORS)))    { detectorHit = s; return "post"; }
+        if ((s = firstMatch(PROFILE_DETECTORS))) { detectorHit = s; return "profile"; }
         return "unknown";
     };
 
     const removeBanners = () => {
+        let n = 0;
         for (const selector of BANNER_SELECTORS) {
-            document.querySelector(selector)?.remove();
+            const el = document.querySelector(selector);
+            if (el) { el.remove(); n++; }
         }
+        return n;
     };
 
     const getPostElement = () => {
         for (const selector of POST_SELECTORS) {
             const el = document.querySelector(selector);
-            if (el) return el;
+            if (el) { targetSelector = selector; return el; }
         }
         return null;
     };
@@ -54,12 +67,14 @@
     window.__ctaAutoCapturePending = (async () => {
         try {
             const pageType = getPageType();
-            console.log(`[CTA Auto/vk] page=${pageType}`);
+            console.log(`[CTA Auto/vk] page=${pageType} via=${detectorHit ?? "none"}`);
 
-            removeBanners();
+            const banners = removeBanners();
+            console.log(`[CTA Auto/vk] cleanup: BANNERS=${banners}`);
 
             if (pageType === "post") {
                 const el = getPostElement();
+                console.log(`[CTA Auto/vk] target=${el ? `post via=${targetSelector}` : "MISS"}`);
                 if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
             }
             if (pageType === "profile") {
