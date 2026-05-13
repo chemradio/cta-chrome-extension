@@ -100,7 +100,6 @@
                     };
             }
             if (pageType === "profile") {
-                document.body.style.zoom = "130%";
                 return { mode: "page" };
             }
             return { mode: "page" };

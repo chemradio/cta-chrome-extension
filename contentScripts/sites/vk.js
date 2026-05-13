@@ -78,7 +78,6 @@
                 if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
             }
             if (pageType === "profile") {
-                document.body.style.zoom = "120%";
                 return { mode: "page" };
             }
             return { mode: "page" };

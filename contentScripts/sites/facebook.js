@@ -186,7 +186,6 @@
                 const commentAs = removeCommentAs();
                 const seeMore = removeSeeMore();
                 console.log(`[CTA Auto/facebook] cleanup: BANNER=${banner} COMMENT_AS=${commentAs} SEE_MORE=${seeMore}`);
-                document.body.style.zoom = "120%";
                 return { mode: "page" };
             }
 

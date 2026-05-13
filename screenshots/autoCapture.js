@@ -40,9 +40,6 @@ function pickModule(hostname) {
     return SITE_MODULES[hostname] ?? null;
 }
 
-// Measure the page's scroll height WITHOUT touching document.body.style.zoom.
-// Auto Mode's site modules may set a zoom for profile pages; clearing it here
-// would discard the work the module just did.
 function measurePageHeight(tabId) {
     return new Promise((resolve, reject) => {
         chrome.scripting.executeScript(

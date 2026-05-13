@@ -57,7 +57,7 @@ One-shot per-site capture. The popup's **Auto** button dispatches to [screenshot
 2. Picks a site module from hostname (see `SITE_MODULES` in [screenshots/autoCapture.js](screenshots/autoCapture.js)). Currently: Facebook, Instagram, Telegram (t.me), X / Twitter, VK.
 3. Injects [contentScripts/sites/_xpath.js](contentScripts/sites/_xpath.js) + the matching `contentScripts/sites/<name>.js`. Each site module is a self-contained IIFE that:
    - Detects the page type (post / story / profile / unknown) from selector matches.
-   - Applies in-place DOM cleanup specific to that page type (remove comment-as toolbars, see-more buttons, sidebar panels; set `font-family`; bump `zoom` for profile pages).
+   - Applies in-place DOM cleanup specific to that page type (remove comment-as toolbars, see-more buttons, sidebar panels; set `font-family`). Site modules do not touch `document.body.style.zoom` — page-mode auto captures leave the user's zoom alone. Only element-mode capture changes zoom (via `chrome.tabs.setZoom`, restored after), and only when needed for accurate cropping.
    - Resolves `window.__ctaAutoCapturePending` with either `{ mode: "element", xpath }` to target a specific node, or `{ mode: "page" }` to fall through to full-page.
 4. Awaits the plan via a second `chrome.scripting.executeScript({func})` call.
 5. Dispatches to `captureElement()` (1920×7000 @ user scale, auto-expands per element pipeline) or to `emulateCaptureViewport()` with measured page height.

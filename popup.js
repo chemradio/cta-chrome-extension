@@ -111,7 +111,6 @@ function getSettings() {
         width:             parseInt(widthInput.value)  || 1920,
         height:            parseInt(heightInput.value) || 1080,
         deviceScaleFactor: getScaleFactor(),
-        cleanup:           document.getElementById("cleanup").checked,
     };
 }
 
@@ -195,7 +194,8 @@ document.getElementById("manual-cleanup").addEventListener("click", () => {
             const breakdown =
                 `easylist:${sources.easylist ?? 0} ` +
                 `bundled:${sources.bundled ?? 0} ` +
-                `user:${sources.user ?? 0}`;
+                `user:${sources.user ?? 0} ` +
+                `user-global:${sources.userGlobal ?? 0}`;
             setStatus(`Removed ${removed} nodes (${breakdown})`, "ok", 5000);
         })
         .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
@@ -217,44 +217,288 @@ document.getElementById("dom-killer").addEventListener("click", async () => {
 
 // ─── Hidden expert UI: triple-click the header to reveal Export ──────────────
 
-const headerTitle = document.getElementById("header-title");
-const exportBtn   = document.getElementById("export-filters");
-const clearBtn    = document.getElementById("clear-filters");
-let titleClickCount = 0;
-let titleClickTimer = null;
+const exportBtn        = document.getElementById("export-filters");
+const clearDomainBtn   = document.getElementById("clear-domain-filters");
+const clearGlobalBtn   = document.getElementById("clear-global-filters");
+const disableBundledCb = document.getElementById("disable-bundled");
 
-headerTitle.addEventListener("click", () => {
-    titleClickCount++;
-    clearTimeout(titleClickTimer);
-    titleClickTimer = setTimeout(() => { titleClickCount = 0; }, 600);
-    if (titleClickCount >= 3) {
-        titleClickCount = 0;
-        const turnOn = exportBtn.hidden;
-        exportBtn.hidden = !turnOn;
-        clearBtn.hidden  = !turnOn;
-        setStatus(turnOn ? "Expert mode on" : "Expert mode off", "ok", 1500);
-    }
+chrome.storage.local.get("bundledFiltersDisabled").then(({ bundledFiltersDisabled }) => {
+    disableBundledCb.checked = !!bundledFiltersDisabled;
 });
 
-clearBtn.addEventListener("click", () => {
+disableBundledCb.addEventListener("change", () => {
+    const disabled = disableBundledCb.checked;
+    chrome.storage.local.set({ bundledFiltersDisabled: disabled });
+    setStatus(
+        disabled ? "Bundled filters disabled" : "Bundled filters enabled",
+        "ok",
+        2000
+    );
+});
+const viewNormal       = document.getElementById("view-normal");
+const viewExpert       = document.getElementById("view-expert");
+const filterHostEl     = document.getElementById("filter-host");
+const filterInput      = document.getElementById("filter-input");
+const filterAddBtn     = document.getElementById("filter-add");
+const filterListEl     = document.getElementById("filter-list");
+const filterListGlobal = document.getElementById("filter-list-global");
+const filterPreview    = document.getElementById("filter-preview");
+const filterParentCb   = document.getElementById("filter-parent");
+const scopeInputs      = document.getElementsByName("filter-scope");
+
+function getScope() {
+    for (const r of scopeInputs) if (r.checked) return r.value;
+    return "host";
+}
+const modeToggleInput  = document.getElementById("mode-toggle-input");
+const modeToggleLabel  = document.getElementById("mode-toggle-label");
+
+function setMode(expert) {
+    viewExpert.hidden = !expert;
+    viewNormal.hidden = expert;
+    modeToggleInput.checked = expert;
+    modeToggleLabel.textContent = expert ? "EXPERT" : "NORMAL";
+    popupEl.classList.toggle("is-expert", expert);
+    if (expert) refreshFilterList();
+}
+
+modeToggleInput.addEventListener("change", () => {
+    const expert = modeToggleInput.checked;
+    setMode(expert);
+    setStatus(expert ? "Expert mode on" : "Expert mode off", "ok", 1500);
+});
+
+// ─── Manual user-filter management ────────────────────────────────────────────
+
+function isValidCssSelector(sel) {
+    try {
+        document.createDocumentFragment().querySelector(sel);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+const cssEsc = (s) =>
+    CSS && CSS.escape ? CSS.escape(s) : String(s).replace(/(["\\\]])/g, "\\$1");
+
+// Accepts a CSS selector OR an HTML-fragment shape and returns a CSS selector.
+// Recognized fragment shapes:
+//   class="foo bar"          → .foo.bar
+//   id="main"                → #main
+//   data-testid="tweet"      → [data-testid="tweet"]
+//   <div class="foo" data-x="y">  → div.foo[data-x="y"]
+//   div class="foo"          → div.foo
+// Anything that doesn't look like a fragment (no angle brackets, no name="value")
+// is passed through untouched so plain CSS selectors keep working.
+function normalizeSelector(raw) {
+    const s = String(raw ?? "").trim();
+    if (!s) return "";
+
+    const hasAngle = /^</.test(s) || />\s*$/.test(s);
+    const hasAttrPair = /([a-zA-Z_:][\w:.-]*)\s*=\s*"[^"]*"/.test(s);
+    if (!hasAngle && !hasAttrPair) return s;
+
+    let body = s.replace(/^<\s*/, "").replace(/\s*\/?>\s*$/, "").trim();
+
+    let tag = "";
+    const tagMatch = body.match(/^([a-zA-Z][\w-]*)(?=\s|$)/);
+    if (tagMatch) {
+        tag = tagMatch[1].toLowerCase();
+        body = body.slice(tagMatch[0].length).trim();
+    }
+
+    const attrs = {};
+    for (const m of body.matchAll(/([a-zA-Z_:][\w:.-]*)\s*=\s*"([^"]*)"/g)) {
+        attrs[m[1]] = m[2];
+    }
+
+    let out = tag;
+    if (attrs.id) {
+        out += `#${cssEsc(attrs.id)}`;
+        delete attrs.id;
+    }
+    if (attrs.class) {
+        for (const c of attrs.class.split(/\s+/).filter(Boolean)) {
+            out += `.${cssEsc(c)}`;
+        }
+        delete attrs.class;
+    }
+    for (const [k, v] of Object.entries(attrs)) {
+        out += `[${k}="${v.replace(/(["\\])/g, "\\$1")}"]`;
+    }
+
+    return out || s;
+}
+
+function wrapParent(sel) {
+    return filterParentCb.checked && sel ? `*:has(> ${sel})` : sel;
+}
+
+function updatePreview() {
+    const raw = filterInput.value;
+    const normalized = wrapParent(normalizeSelector(raw));
+    const differs = normalized && normalized !== raw.trim();
+    const valid = normalized ? isValidCssSelector(normalized) : true;
+
+    if (!raw.trim()) {
+        filterPreview.hidden = true;
+        filterPreview.classList.remove("invalid");
+        filterInput.classList.remove("invalid");
+        return;
+    }
+
+    filterInput.classList.toggle("invalid", !valid);
+    filterPreview.classList.toggle("invalid", !valid);
+
+    if (!valid) {
+        filterPreview.hidden = false;
+        filterPreview.textContent = "Invalid CSS selector";
+        return;
+    }
+    if (differs) {
+        filterPreview.hidden = false;
+        filterPreview.innerHTML = "";
+        const arrow = document.createElement("span");
+        arrow.className = "arrow";
+        arrow.textContent = "→";
+        const sel = document.createElement("span");
+        sel.textContent = normalized;
+        filterPreview.append(arrow, sel);
+    } else {
+        filterPreview.hidden = true;
+    }
+}
+
+function renderListInto(ulEl, selectors, scope) {
+    ulEl.innerHTML = "";
+    for (const sel of selectors) {
+        const li = document.createElement("li");
+        const span = document.createElement("span");
+        span.className = "sel";
+        span.textContent = sel;
+        span.title = sel;
+        const btn = document.createElement("button");
+        btn.className = "remove";
+        btn.type = "button";
+        btn.textContent = "×";
+        btn.title = "Remove";
+        btn.addEventListener("click", () => removeFilter(sel, scope));
+        li.append(span, btn);
+        ulEl.appendChild(li);
+    }
+}
+
+function renderFilterList(host, selectors, globalSelectors) {
+    filterHostEl.textContent = host || "(no host)";
+    renderListInto(filterListEl,     selectors,       "host");
+    renderListInto(filterListGlobal, globalSelectors, "global");
+}
+
+function refreshFilterList() {
+    sendMessage({ action: "listUserFilters" })
+        .then((res) =>
+            renderFilterList(
+                res?.host,
+                res?.selectors ?? [],
+                res?.globalSelectors ?? []
+            )
+        )
+        .catch((e) => setStatus(e.message ?? "Error", "error", 4000));
+}
+
+function addFilter() {
+    const sel = wrapParent(normalizeSelector(filterInput.value));
+    if (!sel) return;
+    if (!isValidCssSelector(sel)) {
+        filterInput.classList.add("invalid");
+        setStatus("Invalid CSS selector", "error", 3000);
+        return;
+    }
+    filterInput.classList.remove("invalid");
+    const scope = getScope();
+    sendMessage({ action: "addUserFilter", selector: sel, scope })
+        .then((res) => {
+            renderFilterList(
+                res?.host,
+                res?.selectors ?? [],
+                res?.globalSelectors ?? []
+            );
+            filterInput.value = "";
+            updatePreview();
+            const where = scope === "global" ? "all hosts" : "this host";
+            setStatus(
+                res?.added ? `Added to ${where}: ${sel}` : "Already present",
+                "ok",
+                2500
+            );
+        })
+        .catch((e) => setStatus(e.message ?? "Error", "error", 4000));
+}
+
+function removeFilter(sel, scope) {
+    sendMessage({ action: "removeUserFilter", selector: sel, scope })
+        .then((res) => {
+            renderFilterList(
+                res?.host,
+                res?.selectors ?? [],
+                res?.globalSelectors ?? []
+            );
+            setStatus(`Removed: ${sel}`, "ok", 2500);
+        })
+        .catch((e) => setStatus(e.message ?? "Error", "error", 4000));
+}
+
+filterAddBtn.addEventListener("click", addFilter);
+filterInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") addFilter();
+});
+filterInput.addEventListener("input", updatePreview);
+filterParentCb.addEventListener("change", updatePreview);
+
+clearDomainBtn.addEventListener("click", () => {
     const ok = confirm(
-        "Clear all locally-stored user filters?\n\n" +
-        "Selectors you collected via DOM-killer will be removed from this " +
-        "browser. Bundled and EasyList filters are not affected."
+        "Clear all per-host (domain) user filters?\n\n" +
+        "Host-scoped selectors you collected via DOM-killer will be removed " +
+        "from this browser. Global, bundled and EasyList filters are not affected."
     );
     if (!ok) return;
     setStatus("Clearing…");
-    sendMessage({ action: "clearUserFilters" })
+    sendMessage({ action: "clearDomainFilters" })
         .then((res) => {
             const n = res?.selectorCount ?? 0;
             const h = res?.hostCount ?? 0;
             setStatus(
                 n === 0
-                    ? "No user filters to clear"
+                    ? "No domain filters to clear"
                     : `Cleared ${n} selectors across ${h} hosts`,
                 "ok",
                 4000
             );
+            refreshFilterList();
+        })
+        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+});
+
+clearGlobalBtn.addEventListener("click", () => {
+    const ok = confirm(
+        "Clear all global user filters?\n\n" +
+        "Selectors that apply to all hosts will be removed from this " +
+        "browser. Domain, bundled and EasyList filters are not affected."
+    );
+    if (!ok) return;
+    setStatus("Clearing…");
+    sendMessage({ action: "clearGlobalFilters" })
+        .then((res) => {
+            const n = res?.selectorCount ?? 0;
+            setStatus(
+                n === 0
+                    ? "No global filters to clear"
+                    : `Cleared ${n} global selectors`,
+                "ok",
+                4000
+            );
+            refreshFilterList();
         })
         .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
 });

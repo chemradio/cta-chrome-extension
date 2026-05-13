@@ -110,14 +110,22 @@ async function runCleanup(tabId) {
     return adResults?.[0]?.result ?? null;
 }
 
+async function readUserFilters() {
+    const { userFilters, userGlobalFilters } =
+        await chrome.storage.local.get(["userFilters", "userGlobalFilters"]);
+    return {
+        map: userFilters ?? {},
+        global: Array.isArray(userGlobalFilters) ? userGlobalFilters : [],
+    };
+}
+
 // Dump userFilters as a downloadable JSON in the same shape as
 // filters/bundledFilters.json — so the dev can merge promising entries
 // straight into the bundled file for the next extension release.
 async function exportUserFilters() {
-    const { userFilters } = await chrome.storage.local.get("userFilters");
-    const domains = userFilters ?? {};
+    const { map: domains, global } = await readUserFilters();
     const hostCount     = Object.keys(domains).length;
-    const selectorCount = Object.values(domains)
+    const selectorCount = global.length + Object.values(domains)
         .reduce((sum, list) => sum + (Array.isArray(list) ? list.length : 0), 0);
 
     if (selectorCount === 0) {
@@ -126,8 +134,8 @@ async function exportUserFilters() {
 
     const payload = {
         _exportedAt: new Date().toISOString(),
-        _shape: "matches filters/bundledFilters.json — drop entries from `domains` into the bundled file",
-        global: [],
+        _shape: "matches filters/bundledFilters.json — drop entries from `global` / `domains` into the bundled file",
+        global,
         domains,
     };
     const json = JSON.stringify(payload, null, 4);
@@ -149,14 +157,70 @@ async function exportUserFilters() {
     return { selectorCount, hostCount };
 }
 
-async function clearUserFilters() {
-    const { userFilters } = await chrome.storage.local.get("userFilters");
-    const domains = userFilters ?? {};
-    const hostCount = Object.keys(domains).length;
-    const selectorCount = Object.values(domains)
+async function listUserFilters(host) {
+    const { map, global } = await readUserFilters();
+    return {
+        host,
+        selectors:       map[host] ?? [],
+        globalSelectors: global,
+    };
+}
+
+async function addUserFilter(host, selector, scope) {
+    const sel = (selector ?? "").trim();
+    if (!sel) throw new Error("Empty selector");
+    const { map, global } = await readUserFilters();
+
+    if (scope === "global") {
+        const added = !global.includes(sel);
+        if (added) {
+            global.push(sel);
+            await chrome.storage.local.set({ userGlobalFilters: global });
+        }
+        return { host, selectors: map[host] ?? [], globalSelectors: global, added };
+    }
+
+    if (!host) throw new Error("No host");
+    const list = map[host] ?? [];
+    const added = !list.includes(sel);
+    if (added) {
+        list.push(sel);
+        map[host] = list;
+        await chrome.storage.local.set({ userFilters: map });
+    }
+    return { host, selectors: list, globalSelectors: global, added };
+}
+
+async function removeUserFilter(host, selector, scope) {
+    const { map, global } = await readUserFilters();
+
+    if (scope === "global") {
+        const next = global.filter((s) => s !== selector);
+        await chrome.storage.local.set({ userGlobalFilters: next });
+        return { host, selectors: map[host] ?? [], globalSelectors: next };
+    }
+
+    const list = (map[host] ?? []).filter((s) => s !== selector);
+    if (list.length === 0) delete map[host];
+    else map[host] = list;
+    await chrome.storage.local.set({ userFilters: map });
+    return { host, selectors: list, globalSelectors: global };
+}
+
+async function clearDomainFilters() {
+    const { map } = await readUserFilters();
+    const hostCount = Object.keys(map).length;
+    const selectorCount = Object.values(map)
         .reduce((sum, list) => sum + (Array.isArray(list) ? list.length : 0), 0);
     await chrome.storage.local.set({ userFilters: {} });
     return { selectorCount, hostCount };
+}
+
+async function clearGlobalFilters() {
+    const { global } = await readUserFilters();
+    const selectorCount = global.length;
+    await chrome.storage.local.set({ userGlobalFilters: [] });
+    return { selectorCount };
 }
 
 async function handleAction(request) {
@@ -178,9 +242,6 @@ async function handleAction(request) {
         }
 
         case "capturePage": {
-            if (settings.cleanup) {
-                await runCleanup(tab.id);
-            }
             await emulateCaptureViewport(
                 tab.id,
                 deviceMetrics,
@@ -229,8 +290,27 @@ async function handleAction(request) {
             return await exportUserFilters();
         }
 
-        case "clearUserFilters": {
-            return await clearUserFilters();
+        case "clearDomainFilters": {
+            return await clearDomainFilters();
+        }
+
+        case "clearGlobalFilters": {
+            return await clearGlobalFilters();
+        }
+
+        case "listUserFilters": {
+            const host = new URL(tab.url).hostname.toLowerCase();
+            return await listUserFilters(host);
+        }
+
+        case "addUserFilter": {
+            const host = new URL(tab.url).hostname.toLowerCase();
+            return await addUserFilter(host, request.selector, request.scope);
+        }
+
+        case "removeUserFilter": {
+            const host = new URL(tab.url).hostname.toLowerCase();
+            return await removeUserFilter(host, request.selector, request.scope);
         }
 
         default:
@@ -250,7 +330,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         "manualCleanup",
         "autoCapture",
         "exportFilters",
-        "clearUserFilters",
+        "clearDomainFilters",
+        "clearGlobalFilters",
+        "listUserFilters",
+        "addUserFilter",
+        "removeUserFilter",
         "domKiller",
         "domKillerEnded",
     ]);

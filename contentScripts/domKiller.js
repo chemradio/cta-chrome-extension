@@ -162,8 +162,9 @@
         const link = element.closest("a");
         const target = link ?? element;
 
-        const selector = computeSelector(target);
-        if (selector) persistUserFilter(selector);
+        // Persisting click-removed selectors to userFilters is disabled:
+        // the generalized selector often matched different nodes on re-apply
+        // than what the user removed by hand. Will be redesigned separately.
 
         target.remove();
     }

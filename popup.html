@@ -15,6 +15,19 @@
                 <span class="header-title" id="header-title"
                     >CTA Screenshot Helper</span
                 >
+                <label
+                    class="mode-toggle"
+                    for="mode-toggle-input"
+                    title="Toggle expert mode"
+                >
+                    <input type="checkbox" id="mode-toggle-input" />
+                    <span class="mode-toggle-track">
+                        <span class="mode-toggle-thumb"></span>
+                    </span>
+                    <span class="mode-toggle-label" id="mode-toggle-label"
+                        >NORMAL</span
+                    >
+                </label>
             </header>
 
             <div id="capture-overlay" class="capture-overlay">
@@ -23,213 +36,316 @@
                 <div id="capture-hint" class="capture-hint"></div>
             </div>
 
-            <!-- Actions -->
-            <div class="actions">
-                <button id="capture-auto" class="btn-capture">
-                    <svg
-                        class="btn-icon"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.75"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                    >
-                        <path
-                            d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
-                        />
-                        <path d="M20 3v4" />
-                        <path d="M22 5h-4" />
-                        <path d="M4 17v2" />
-                        <path d="M5 18H3" />
-                    </svg>
-                    <span>Auto Capture</span>
-                </button>
-                <button
-                    id="capture-page"
-                    class="btn-capture btn-capture--primary"
-                >
-                    <svg
-                        class="btn-icon"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.75"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                    >
-                        <rect width="20" height="14" x="2" y="3" rx="2" />
-                        <line x1="8" x2="16" y1="21" y2="21" />
-                        <line x1="12" x2="12" y1="17" y2="21" />
-                    </svg>
-                    <span>Capture Page</span>
-                </button>
-                <button id="capture-element" class="btn-capture">
-                    <svg
-                        class="btn-icon"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.75"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                    >
-                        <path
-                            d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"
-                        />
-                        <path d="M5 3a2 2 0 0 0-2 2" />
-                        <path d="M19 3a2 2 0 0 1 2 2" />
-                        <path d="M5 21a2 2 0 0 1-2-2" />
-                        <path d="M9 3h1" />
-                        <path d="M9 21h2" />
-                        <path d="M14 3h1" />
-                        <path d="M3 9v1" />
-                        <path d="M21 9v2" />
-                        <path d="M3 14v1" />
-                    </svg>
-                    <span>Capture Element</span>
-                </button>
-            </div>
-
             <div class="body">
-                <!-- Resolution -->
-                <section>
-                    <div class="section-label">Resolution</div>
-                    <div class="radio-group" id="layout-group">
-                        <input
-                            type="radio"
-                            id="fullpage"
-                            name="layout"
-                            value="fullpage"
-                            checked
-                        />
-                        <label for="fullpage">Full Page</label>
+                <div id="view-normal">
+                    <!-- Quality multiplier -->
+                    <section>
+                        <div class="section-label">Quality multiplier</div>
+                        <div class="radio-group">
+                            <input
+                                type="radio"
+                                id="onex"
+                                name="scale"
+                                value="1"
+                            />
+                            <label for="onex">1×</label>
 
-                        <input
-                            type="radio"
-                            id="vertical"
-                            name="layout"
-                            value="vertical"
-                        />
-                        <label for="vertical">Vertical</label>
+                            <input
+                                type="radio"
+                                id="twox"
+                                name="scale"
+                                value="2"
+                                checked
+                            />
+                            <label for="twox">2×</label>
 
-                        <input
-                            type="radio"
-                            id="horizontal"
-                            name="layout"
-                            value="horizontal"
-                        />
-                        <label for="horizontal">Horizontal</label>
+                            <input
+                                type="radio"
+                                id="threex"
+                                name="scale"
+                                value="3"
+                            />
+                            <label for="threex">3×</label>
 
-                        <input
-                            type="radio"
-                            id="horizontal4k"
-                            name="layout"
-                            value="horizontal4k"
-                        />
-                        <label for="horizontal4k">4K</label>
+                            <input
+                                type="radio"
+                                id="fourx"
+                                name="scale"
+                                value="4"
+                            />
+                            <label for="fourx">4×</label>
+                        </div>
+                    </section>
 
-                        <input
-                            type="radio"
-                            id="custom"
-                            name="layout"
-                            value="custom"
-                        />
-                        <label for="custom" class="custom-label">Custom</label>
-                    </div>
-                    <div class="resolution-row">
-                        <input
-                            type="number"
-                            id="width"
-                            placeholder="Width"
-                            min="300"
-                            max="9999"
-                            value="1920"
-                        />
-                        <span class="resolution-x">×</span>
-                        <input
-                            type="number"
-                            id="height"
-                            placeholder="Height"
-                            min="300"
-                            max="9999"
-                            value="7000"
-                        />
-                        <span class="resolution-px">px</span>
-                    </div>
-                </section>
+                    <div class="divider"></div>
 
-                <!-- Quality multiplier -->
-                <section>
-                    <div class="section-label">Quality multiplier</div>
-                    <div class="radio-group">
-                        <input type="radio" id="onex" name="scale" value="1" />
-                        <label for="onex">1×</label>
+                    <!-- Auto Capture -->
+                    <section>
+                        <button id="capture-auto" class="btn-capture">
+                            <svg
+                                class="btn-icon"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                                />
+                            </svg>
+                            <span>Auto Capture</span>
+                        </button>
+                    </section>
 
-                        <input
-                            type="radio"
-                            id="twox"
-                            name="scale"
-                            value="2"
-                            checked
-                        />
-                        <label for="twox">2×</label>
+                    <div class="divider"></div>
 
-                        <input
-                            type="radio"
-                            id="threex"
-                            name="scale"
-                            value="3"
-                        />
-                        <label for="threex">3×</label>
+                    <!-- Page Capture + resolution -->
+                    <section>
+                        <button
+                            id="capture-page"
+                            class="btn-capture btn-capture--primary"
+                        >
+                            <svg
+                                class="btn-icon"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <rect
+                                    width="20"
+                                    height="14"
+                                    x="2"
+                                    y="3"
+                                    rx="2"
+                                />
+                                <line x1="8" x2="16" y1="21" y2="21" />
+                                <line x1="12" x2="12" y1="17" y2="21" />
+                            </svg>
+                            <span>Page Capture</span>
+                        </button>
+                        <div class="section-label">Resolution</div>
+                        <div class="radio-group" id="layout-group">
+                            <input
+                                type="radio"
+                                id="fullpage"
+                                name="layout"
+                                value="fullpage"
+                                checked
+                            />
+                            <label for="fullpage">Full Page</label>
 
-                        <input type="radio" id="fourx" name="scale" value="4" />
-                        <label for="fourx">4×</label>
-                    </div>
-                </section>
+                            <input
+                                type="radio"
+                                id="vertical"
+                                name="layout"
+                                value="vertical"
+                            />
+                            <label for="vertical">Vertical</label>
 
-                <div class="divider"></div>
+                            <input
+                                type="radio"
+                                id="horizontal"
+                                name="layout"
+                                value="horizontal"
+                            />
+                            <label for="horizontal">Horizontal</label>
 
-                <!-- Cleanup -->
-                <section class="cleanup-section">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="cleanup" checked />
-                        <span>Cleanup before capture</span>
-                    </label>
-                    <button id="manual-cleanup" class="btn-ghost">
-                        Manual
-                    </button>
-                </section>
+                            <input
+                                type="radio"
+                                id="horizontal4k"
+                                name="layout"
+                                value="horizontal4k"
+                            />
+                            <label for="horizontal4k">4K</label>
 
-                <div class="divider"></div>
+                            <input
+                                type="radio"
+                                id="custom"
+                                name="layout"
+                                value="custom"
+                            />
+                            <label for="custom" class="custom-label"
+                                >Custom</label
+                            >
+                        </div>
+                        <div class="resolution-row">
+                            <input
+                                type="number"
+                                id="width"
+                                placeholder="Width"
+                                min="300"
+                                max="9999"
+                                value="1920"
+                            />
+                            <span class="resolution-x">×</span>
+                            <input
+                                type="number"
+                                id="height"
+                                placeholder="Height"
+                                min="300"
+                                max="9999"
+                                value="7000"
+                            />
+                            <span class="resolution-px">px</span>
+                        </div>
+                    </section>
 
-                <!-- Helpers -->
-                <section>
-                    <div class="section-label">Helpers</div>
-                    <button
-                        id="dom-killer"
-                        class="btn-helper btn-helper--danger"
-                    >
-                        Remove Elements
-                    </button>
-                    <button
-                        id="export-filters"
-                        class="btn-helper btn-helper--expert"
-                        hidden
-                    >
-                        Export Filters
-                    </button>
-                    <button
-                        id="clear-filters"
-                        class="btn-helper btn-helper--expert"
-                        hidden
-                    >
-                        Clear User Filters
-                    </button>
-                </section>
+                    <div class="divider"></div>
+
+                    <!-- Capture Element -->
+                    <section>
+                        <button id="capture-element" class="btn-capture">
+                            <svg
+                                class="btn-icon"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"
+                                />
+                                <path d="M5 3a2 2 0 0 0-2 2" />
+                                <path d="M19 3a2 2 0 0 1 2 2" />
+                                <path d="M5 21a2 2 0 0 1-2-2" />
+                                <path d="M9 3h1" />
+                                <path d="M9 21h2" />
+                                <path d="M14 3h1" />
+                                <path d="M3 9v1" />
+                                <path d="M21 9v2" />
+                                <path d="M3 14v1" />
+                            </svg>
+                            <span>Capture Element</span>
+                        </button>
+                    </section>
+
+                    <div class="divider"></div>
+
+                    <!-- Helpers -->
+                    <section>
+                        <div class="section-label">Helpers</div>
+                        <div class="helpers-row">
+                            <button
+                                id="dom-killer"
+                                class="btn-helper btn-helper--danger"
+                            >
+                                Remove Elements
+                            </button>
+                            <button id="manual-cleanup" class="btn-helper">
+                                Cleanup
+                            </button>
+                        </div>
+                    </section>
+                </div>
+
+                <div id="view-expert" hidden>
+                    <section>
+                        <div class="expert-header">Expert Mode</div>
+                    </section>
+
+                    <div class="divider"></div>
+
+                    <section>
+                        <div id="filter-manager" class="filter-manager">
+                            <div class="section-label">Add filter</div>
+                            <div class="filter-scope radio-group">
+                                <input
+                                    type="radio"
+                                    id="scope-host"
+                                    name="filter-scope"
+                                    value="host"
+                                    checked
+                                />
+                                <label for="scope-host" id="scope-host-label">
+                                    This host
+                                </label>
+                                <input
+                                    type="radio"
+                                    id="scope-global"
+                                    name="filter-scope"
+                                    value="global"
+                                />
+                                <label for="scope-global">All hosts</label>
+                            </div>
+                            <div class="filter-add-row">
+                                <input
+                                    type="text"
+                                    id="filter-input"
+                                    placeholder='CSS selector, or paste class="…" / <div …>'
+                                    spellcheck="false"
+                                    autocomplete="off"
+                                />
+                                <button id="filter-add" class="btn-helper">
+                                    Add
+                                </button>
+                            </div>
+                            <label class="filter-parent" for="filter-parent">
+                                <input type="checkbox" id="filter-parent" />
+                                <span>Target parent element</span>
+                            </label>
+                            <div
+                                id="filter-preview"
+                                class="filter-preview"
+                                hidden
+                            ></div>
+
+                            <div class="filter-list-block">
+                                <div class="section-label">
+                                    For
+                                    <span id="filter-host" class="filter-host"
+                                        >…</span
+                                    >
+                                </div>
+                                <ul id="filter-list" class="filter-list"></ul>
+                            </div>
+
+                            <div class="filter-list-block">
+                                <div class="section-label">All hosts</div>
+                                <ul
+                                    id="filter-list-global"
+                                    class="filter-list"
+                                ></ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="divider"></div>
+
+                    <section>
+                        <button
+                            id="export-filters"
+                            class="btn-helper btn-helper--expert"
+                        >
+                            Export Filters
+                        </button>
+                        <label class="filter-parent" for="disable-bundled">
+                            <input type="checkbox" id="disable-bundled" />
+                            <span>Disable bundled filters</span>
+                        </label>
+                        <button
+                            id="clear-domain-filters"
+                            class="btn-helper btn-helper--expert"
+                        >
+                            Clear Domain Filters
+                        </button>
+                        <button
+                            id="clear-global-filters"
+                            class="btn-helper btn-helper--expert"
+                        >
+                            Clear Global Filters
+                        </button>
+                    </section>
+                </div>
             </div>
 
             <div id="status" class="status"></div>

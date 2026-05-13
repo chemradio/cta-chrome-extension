@@ -6,12 +6,19 @@
     window.__ctaAdRemoverRunning = true;
 
     try {
-        const { adFilters, bundledFilters, userFilters } =
-            await chrome.storage.local.get([
-                "adFilters",
-                "bundledFilters",
-                "userFilters",
-            ]);
+        const {
+            adFilters,
+            bundledFilters,
+            userFilters,
+            userGlobalFilters,
+            bundledFiltersDisabled,
+        } = await chrome.storage.local.get([
+            "adFilters",
+            "bundledFilters",
+            "userFilters",
+            "userGlobalFilters",
+            "bundledFiltersDisabled",
+        ]);
         if (!adFilters) {
             console.warn(
                 "[CTA] AdRemover: no EasyList in storage yet. Background " +
@@ -21,9 +28,12 @@
 
         const hostname = location.hostname.toLowerCase();
 
+        const bundledOn      = !bundledFiltersDisabled;
         const adDomains      = adFilters?.domains ?? {};
-        const bundledDomains = bundledFilters?.domains ?? {};
+        const bundledDomains = bundledOn ? (bundledFilters?.domains ?? {}) : {};
+        const bundledGlobal  = bundledOn ? (bundledFilters?.global  ?? []) : [];
         const userMap        = userFilters ?? {};
+        const userGlobal     = Array.isArray(userGlobalFilters) ? userGlobalFilters : [];
 
         const matchedAd      = Object.keys(adDomains).filter((d) => domainMatches(hostname, d));
         const matchedBundled = Object.keys(bundledDomains).filter((d) => domainMatches(hostname, d));
@@ -33,7 +43,8 @@
         // only applied once (user said: "duplicates handled once").
         const selectors = Array.from(new Set([
             ...(adFilters?.global ?? []),
-            ...(bundledFilters?.global ?? []),
+            ...bundledGlobal,
+            ...userGlobal,
             ...matchedAd.flatMap((k) => adDomains[k]),
             ...matchedBundled.flatMap((k) => bundledDomains[k]),
             ...matchedUser.flatMap((k) => userMap[k]),
@@ -44,15 +55,16 @@
             `[CTA] AdRemover: removed ${removed} node(s) using ` +
                 `${selectors.length} selectors ` +
                 `(easylist:${matchedAd.length} bundled:${matchedBundled.length} ` +
-                `user:${matchedUser.length})`
+                `user:${matchedUser.length} user-global:${userGlobal.length})`
         );
         return {
             removed,
             selectors: selectors.length,
             sources: {
-                easylist: matchedAd.length,
-                bundled:  matchedBundled.length,
-                user:     matchedUser.length,
+                easylist:    matchedAd.length,
+                bundled:     matchedBundled.length,
+                user:        matchedUser.length,
+                userGlobal:  userGlobal.length,
             },
         };
     } finally {

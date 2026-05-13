@@ -46,6 +46,86 @@ header {
 }
 
 .header-title {
+    flex: 1;
+}
+
+/* ── Mode toggle (Normal ↔ Expert) ─────────────────── */
+
+.mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.mode-toggle input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.mode-toggle-track {
+    position: relative;
+    width: 28px;
+    height: 16px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+.mode-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    background: var(--white);
+    border-radius: 50%;
+    transition: transform 0.15s, background 0.15s;
+}
+
+.mode-toggle input:checked + .mode-toggle-track {
+    background: var(--accent);
+}
+
+.mode-toggle input:checked + .mode-toggle-track .mode-toggle-thumb {
+    transform: translateX(12px);
+}
+
+/* ── Expert-mode header tint ───────────────────────── */
+
+.popup.is-expert header {
+    background: var(--danger);
+}
+
+.popup.is-expert .mode-toggle input:checked + .mode-toggle-track {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.popup.is-expert .mode-toggle input:checked + .mode-toggle-track .mode-toggle-thumb {
+    background: var(--danger);
+}
+
+.popup.is-expert .expert-header {
+    color: var(--danger);
+}
+
+.mode-toggle input:focus-visible + .mode-toggle-track {
+    box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.mode-toggle-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--white);
+    min-width: 42px;
+    text-align: right;
+}
+
+.header-title {
     color: var(--white);
     font-size: 14px;
     font-weight: 700;
@@ -192,40 +272,23 @@ section + section {
     flex-shrink: 0;
 }
 
-/* ── Cleanup row ───────────────────────────────────── */
+/* ── Helpers row ───────────────────────────────────── */
 
-.cleanup-section {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.checkbox-label {
+.helpers-row {
     display: flex;
-    align-items: center;
-    gap: 7px;
-    cursor: pointer;
-    font-size: 12px;
-    color: var(--text);
-    font-weight: 600;
+    gap: 6px;
 }
 
-.checkbox-label input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
-    accent-color: var(--accent);
-    cursor: pointer;
-    flex-shrink: 0;
+.helpers-row #dom-killer {
+    flex: 1;
+}
+
+.helpers-row #manual-cleanup {
+    flex: 0 0 auto;
+    width: auto;
 }
 
 /* ── Buttons ───────────────────────────────────────── */
-
-.actions {
-    padding: 12px 12px 4px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
 
 button {
     font-family: inherit;
@@ -343,6 +406,190 @@ button:active {
     user-select: none;
 }
 
+/* ── User filter manager (expert) ──────────────────── */
+
+.filter-manager {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    background: var(--bg-section);
+    border: 1px dashed var(--text-muted);
+    border-radius: var(--radius-sm);
+}
+
+#view-normal,
+#view-expert {
+    display: flex;
+    flex-direction: column;
+}
+
+#view-normal[hidden],
+#view-expert[hidden] {
+    display: none;
+}
+
+.expert-header {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+}
+
+.expert-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.filter-manager[hidden] {
+    display: none;
+}
+
+.filter-preview[hidden] {
+    display: none;
+}
+
+.filter-host {
+    color: var(--accent);
+    font-family: 'Consolas', 'Menlo', monospace;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.filter-add-row {
+    display: flex;
+    gap: 6px;
+}
+
+.filter-add-row input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 7px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-size: 12px;
+    color: var(--text);
+    background: var(--white);
+}
+
+.filter-add-row input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.filter-add-row input[type="text"].invalid {
+    border-color: var(--danger);
+}
+
+.filter-add-row #filter-add {
+    flex: 0 0 auto;
+    width: auto;
+    padding: 5px 12px;
+}
+
+.filter-scope label {
+    font-size: 11px;
+    padding: 3px 6px;
+}
+
+.filter-list-block {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.filter-parent {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    padding: 0 2px;
+}
+
+.filter-parent input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--danger);
+}
+
+.filter-preview {
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 2px 4px;
+    word-break: break-all;
+}
+
+.filter-preview.invalid {
+    color: var(--danger);
+}
+
+.filter-preview .arrow {
+    color: var(--accent);
+    margin-right: 4px;
+}
+
+.filter-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.filter-list:empty::after {
+    content: "No filters for this host";
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.filter-list li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-size: 11px;
+    color: var(--text);
+}
+
+.filter-list .sel {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.filter-list .remove {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--danger);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.filter-list .remove:hover {
+    background: var(--danger);
+    color: var(--white);
+}
+
 /* ── Status bar ────────────────────────────────────── */
 
 .status {
@@ -372,7 +619,6 @@ button:active {
 
 .popup.is-capturing .capture-overlay { display: flex; }
 .popup.is-capturing .body            { display: none; }
-.popup.is-capturing .actions         { display: none; }
 .popup.is-capturing .status          { display: none; }
 
 .capture-ring {
