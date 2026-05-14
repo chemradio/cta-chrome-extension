@@ -259,8 +259,28 @@ function setMode(expert) {
     modeToggleInput.checked = expert;
     modeToggleLabel.textContent = expert ? "EXPERT" : "NORMAL";
     popupEl.classList.toggle("is-expert", expert);
+    helpContentNormal.hidden = expert;
+    helpContentExpert.hidden = !expert;
     if (expert) refreshFilterList();
 }
+
+// ─── Help view ────────────────────────────────────────────────────────────────
+
+const helpToggleBtn      = document.getElementById("help-toggle");
+const helpView           = document.getElementById("view-help");
+const helpContentNormal  = document.getElementById("help-content-normal");
+const helpContentExpert  = document.getElementById("help-content-expert");
+
+function setHelp(open) {
+    popupEl.classList.toggle("is-helping", open);
+    helpView.hidden = !open;
+    helpToggleBtn.textContent = open ? "×" : "?";
+    helpToggleBtn.title = open ? "Close help" : "Help";
+}
+
+helpToggleBtn.addEventListener("click", () => {
+    setHelp(!popupEl.classList.contains("is-helping"));
+});
 
 modeToggleInput.addEventListener("change", () => {
     const expert = modeToggleInput.checked;
