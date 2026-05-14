@@ -152,6 +152,13 @@
         }
     }
 
+    function onKeyDown(e) {
+        if (e.key !== "Escape") return;
+        e.preventDefault();
+        e.stopPropagation();
+        destroy();
+    }
+
     function onClick(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -185,6 +192,7 @@
         document.removeEventListener("mousemove", onMouseMove, true);
         document.removeEventListener("click", onClick, true);
         document.removeEventListener("wheel", onWheel, true);
+        document.removeEventListener("keydown", onKeyDown, true);
         chrome.runtime.onMessage.removeListener(metricsListener);
 
         if (currentElement) {
@@ -203,4 +211,5 @@
     document.addEventListener("mousemove", onMouseMove, { capture: true });
     document.addEventListener("click", onClick, { capture: true });
     document.addEventListener("wheel", onWheel, { capture: true, passive: false });
+    document.addEventListener("keydown", onKeyDown, { capture: true });
 })();

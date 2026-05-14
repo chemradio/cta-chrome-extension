@@ -156,16 +156,60 @@ document.getElementById("capture-element").addEventListener("click", async () =>
 document.getElementById("capture-auto").addEventListener("click", () => {
     showCapturing("Auto-capturing…");
     sendMessage({ action: "autoCapture", settings: getSettings() })
-        .then((res) => {
-            stopCapturing();
-            const label =
-                res?.mode === "element"
-                    ? `Auto: captured ${res.module} post`
-                    : res?.mode === "page"
-                    ? `Auto: full page for ${res.module}`
-                    : "Auto: full page (no site module)";
-            setStatus(`${label} — check Downloads`, "ok", 4000);
-        })
+        .then(() => { stopCapturing(); setStatus("Auto: full page — check Downloads", "ok", 4000); })
+        .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
+});
+
+// ─── Site-detection prompt ────────────────────────────────────────────────────
+//
+// On open, ask the background to run a non-destructive detection pass on
+// the active tab. If the site module recognizes a capturable target (post,
+// story, group post), surface a single-click "Capture this <X>" button at
+// the top of the popup. Click → site-aware element capture using the same
+// pipeline Auto Mode used to dispatch to.
+
+const sitePromptSection = document.getElementById("site-prompt");
+const sitePromptDivider = document.getElementById("site-prompt-divider");
+const captureSiteBtn    = document.getElementById("capture-site");
+const captureSiteLabel  = document.getElementById("capture-site-label");
+const captureSiteHint   = document.getElementById("capture-site-hint");
+
+// Page-type → button label. Types not listed (profile, unknown) don't get
+// a prompt — those pages should fall through to Auto/Page Capture.
+const PROMPT_LABELS = {
+    post:      "Capture this post",
+    story:     "Capture this story",
+    groupPost: "Capture this post",
+};
+
+const SITE_DISPLAY_NAMES = {
+    facebook:  "Facebook",
+    instagram: "Instagram",
+    telegram:  "Telegram",
+    vk:        "VK",
+    x:         "X / Twitter",
+};
+
+function showSitePrompt(module, pageType) {
+    captureSiteLabel.textContent = PROMPT_LABELS[pageType];
+    captureSiteHint.textContent  =
+        `Detected on ${SITE_DISPLAY_NAMES[module] ?? module}`;
+    sitePromptSection.hidden = false;
+    sitePromptDivider.hidden = false;
+}
+
+sendMessage({ action: "detectSite" })
+    .then((res) => {
+        if (res?.module && PROMPT_LABELS[res.pageType]) {
+            showSitePrompt(res.module, res.pageType);
+        }
+    })
+    .catch(() => { /* detection is best-effort — silent on failure */ });
+
+captureSiteBtn.addEventListener("click", () => {
+    showCapturing("Capturing…");
+    sendMessage({ action: "captureSiteElement", settings: getSettings() })
+        .then(() => { stopCapturing(); setStatus("Done — check Downloads", "ok", 4000); })
         .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
 });
 

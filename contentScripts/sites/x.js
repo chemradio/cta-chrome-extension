@@ -67,6 +67,9 @@
     window.__ctaAutoCapturePending = (async () => {
         try {
             const pageType = getPageType();
+            if (window.__ctaSiteOptions?.detectOnly) {
+                return { mode: "detect", pageType };
+            }
             console.log(`[CTA Auto/x] page=${pageType} via=${detectorHit ?? "none"}`);
 
             const personal = removePersonal();

@@ -45,6 +45,45 @@
 
             <div class="body">
                 <div id="view-normal">
+                    <!-- Site detection prompt (shown only when a supported
+                         site exposes a capturable target — post / story / etc.) -->
+                    <section id="site-prompt" class="site-prompt" hidden>
+                        <button
+                            id="capture-site"
+                            class="btn-capture btn-capture--primary"
+                        >
+                            <svg
+                                class="btn-icon"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"
+                                />
+                                <path d="M5 3a2 2 0 0 0-2 2" />
+                                <path d="M19 3a2 2 0 0 1 2 2" />
+                                <path d="M5 21a2 2 0 0 1-2-2" />
+                                <path d="M9 3h1" />
+                                <path d="M9 21h2" />
+                                <path d="M14 3h1" />
+                                <path d="M3 9v1" />
+                                <path d="M21 9v2" />
+                                <path d="M3 14v1" />
+                            </svg>
+                            <span id="capture-site-label">Capture this post</span>
+                        </button>
+                        <div class="site-prompt-hint" id="capture-site-hint">
+                            Detected on this page
+                        </div>
+                    </section>
+
+                    <div class="divider" id="site-prompt-divider" hidden></div>
+
                     <!-- Quality multiplier -->
                     <section>
                         <div class="section-label">Quality multiplier</div>
@@ -360,14 +399,25 @@
                     <h3 class="help-title">How capture works</h3>
 
                     <div class="help-block">
+                        <div class="help-heading">Capture this post / story</div>
+                        <p>
+                            When you open the popup on Facebook, Instagram,
+                            Telegram (t.me), X / Twitter or VK, the extension
+                            checks whether the page contains a post or a story.
+                            If it does, a "Capture this post" (or "story")
+                            button appears at the top. Click it to remove
+                            comments, sidebars and other clutter around the
+                            target and capture just that element.
+                        </p>
+                    </div>
+
+                    <div class="help-block">
                         <div class="help-heading">Auto Capture</div>
                         <p>
-                            One-click capture tuned to the current site. The
-                            extension recognizes posts on Facebook, Instagram,
-                            Telegram (t.me), X / Twitter and VK, removes
-                            comments, sidebars and other clutter around the
-                            post, and captures just the post area. On unknown
-                            sites it falls back to a full-page capture.
+                            One-click cleanup + full-page capture: runs the
+                            ad-remover and per-site cleanup, then captures the
+                            whole page at the chosen scale. Use this when you
+                            want the whole page, not a single post.
                         </p>
                     </div>
 

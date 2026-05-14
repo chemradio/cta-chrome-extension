@@ -449,6 +449,26 @@ button:active {
     transform: scale(1.05);
 }
 
+.site-prompt {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* `display: flex` above out-specifies the UA `[hidden] { display:none }`
+   rule, so the section would render even with the hidden attribute set.
+   Re-assert hidden here. */
+.site-prompt[hidden] {
+    display: none;
+}
+
+.site-prompt-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    letter-spacing: 0.02em;
+}
+
 .btn-ghost {
     background: transparent;
     color: var(--accent);

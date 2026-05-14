@@ -3,7 +3,11 @@ import { addContextMenusListener } from "./contextMenus/contextMenuListener.js";
 import { emulateCaptureViewport } from "./screenshots/emulatedViewportCapture.js";
 import { addElementClickedListener } from "./screenshots/elementSelect/elementClickListener.js";
 import { refreshFilters, refreshIfStale } from "./adRemover/refreshFilters.js";
-import { runAutoCapture } from "./screenshots/autoCapture.js";
+import {
+    runAutoCapture,
+    detectSite,
+    captureSiteElement,
+} from "./screenshots/autoCapture.js";
 
 addElementClickedListener();
 createContextMenus();
@@ -290,6 +294,21 @@ async function handleAction(request) {
             return result;
         }
 
+        case "detectSite": {
+            if (isRestrictedUrl(tab.url)) return { module: null, pageType: null };
+            return await detectSite({ tabId: tab.id, url: tab.url });
+        }
+
+        case "captureSiteElement": {
+            const result = await captureSiteElement({
+                tabId: tab.id,
+                url: tab.url,
+                settings,
+                screenshotSuffix,
+            });
+            return result;
+        }
+
         case "domKiller": {
             await chrome.scripting.executeScript({
                 target: { tabId: tab.id },
@@ -341,6 +360,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         "captureElement",
         "manualCleanup",
         "autoCapture",
+        "detectSite",
+        "captureSiteElement",
         "exportFilters",
         "clearDomainFilters",
         "clearGlobalFilters",

@@ -140,6 +140,10 @@
 
     window.__ctaAutoCapturePending = (async () => {
         try {
+            if (window.__ctaSiteOptions?.detectOnly) {
+                const pageType = getPageType();
+                return { mode: "detect", pageType };
+            }
             document.body.style.fontFamily = "'Roboto', sans-serif";
             const pageType = getPageType();
             const logged = isLoggedIn();

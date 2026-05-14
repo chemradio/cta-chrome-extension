@@ -10,7 +10,7 @@ This document describes the current implementation. Aspirational features are sp
 
 Two ways to trigger a capture:
 
-1. **Toolbar popup** ([popup.html](popup.html) / [popup.js](popup.js)) — main UI with resolution, scale, cleanup options, and three action buttons: **Capture Page**, **Capture Element**, and **Auto**.
+1. **Toolbar popup** ([popup.html](popup.html) / [popup.js](popup.js)) — main UI with resolution, scale, cleanup options, and three action buttons: **Capture Page**, **Capture Element**, and **Auto**. When opened on a supported site (Facebook, Instagram, Telegram, X, VK) the popup also runs a non-destructive site-detection pass and surfaces a "Capture this <post/story>" button at the top if a target is recognized.
 2. **Right-click context menu** ([contextMenus/](contextMenus/)) — quick presets defined in [screenshots/emulation/emulationOptions.js](screenshots/emulation/emulationOptions.js) plus an "Element Screenshot" entry. Skips the popup; uses hard-coded device metrics.
 
 ---
@@ -51,20 +51,31 @@ Click commits the selection. The extension then:
 
 ### Auto Mode
 
-One-shot per-site capture. The popup's **Auto** button dispatches to [screenshots/autoCapture.js](screenshots/autoCapture.js) which:
+One-click full-page capture with cleanup. The popup's **Auto Capture** button dispatches to `runAutoCapture` in [screenshots/autoCapture.js](screenshots/autoCapture.js) which:
 
 1. Runs AdRemover (lazy-refreshes filter cache, injects `contentScripts/adRemover.js`).
-2. Picks a site module from hostname (see `SITE_MODULES` in [screenshots/autoCapture.js](screenshots/autoCapture.js)). Currently: Facebook, Instagram, Telegram (t.me), X / Twitter, VK.
-3. Injects [contentScripts/sites/_xpath.js](contentScripts/sites/_xpath.js) + the matching `contentScripts/sites/<name>.js`. Each site module is a self-contained IIFE that:
-   - Detects the page type (post / story / profile / unknown) from selector matches.
-   - Applies in-place DOM cleanup specific to that page type (remove comment-as toolbars, see-more buttons, sidebar panels; set `font-family`). Site modules do not touch `document.body.style.zoom` — page-mode auto captures leave the user's zoom alone. Only element-mode capture changes zoom (via `chrome.tabs.setZoom`, restored after), and only when needed for accurate cropping.
-   - Resolves `window.__ctaAutoCapturePending` with either `{ mode: "element", xpath }` to target a specific node, or `{ mode: "page" }` to fall through to full-page.
-4. Awaits the plan via a second `chrome.scripting.executeScript({func})` call.
-5. Dispatches to `captureElement()` (1920×7000 @ user scale, auto-expands per element pipeline) or to `emulateCaptureViewport()` with measured page height.
+2. Injects [contentScripts/cleanup.js](contentScripts/cleanup.js) — small hand-curated per-host selectors for screenshot framing.
+3. Measures page height and captures full-page (1920 × measured height, capped at 16000 px) at the user-selected scale.
 
-Unknown hosts (or modules that return `mode: "page"`) capture full-page at the user-selected scale; the documented fallback is 2×.
+Auto Mode does **not** dispatch to element capture or run any site module. Site-aware element capture lives in the popup's site-detection prompt (next section).
 
-Site modules are intentionally independent files so adding a host = drop a new file under [contentScripts/sites/](contentScripts/sites/) and add one line to `SITE_MODULES`.
+### Site-detection prompt (Capture this post/story)
+
+When the popup opens, it sends `detectSite` to the background, which calls `detectSite` in [screenshots/autoCapture.js](screenshots/autoCapture.js). That function picks a site module by hostname (`SITE_MODULES` map) and first runs a URL-pattern gate (`SITE_URL_PATTERNS`) to ensure the URL looks like a single-post / single-story page — without this gate the in-page DOM detectors false-fire on feed and profile pages (e.g. Instagram's `article`, Facebook's `data-pagelet="GroupFeed"`, X's `article[tabindex="-1"]` all match on timelines). Only if the URL passes does it inject [contentScripts/sites/_xpath.js](contentScripts/sites/_xpath.js) + `contentScripts/sites/<name>.js` after setting `window.__ctaSiteOptions = { detectOnly: true }`. In that mode each module's IIFE runs only its `getPageType()` detector and resolves `window.__ctaAutoCapturePending` with `{ mode: "detect", pageType }` — no DOM cleanup, no xpath build. If `pageType` is `post` / `story` / `groupPost`, the popup unhides the top "Capture this <X>" section with a label tuned to the type.
+
+Click → background dispatches `captureSiteElement`, which:
+
+1. Runs AdRemover.
+2. Re-injects the site module with `detectOnly: false`. The module now runs its full pipeline: per-page-type DOM cleanup (remove comment-as toolbars, see-more buttons, sidebar panels; set `font-family`) and xpath build. Resolves with `{ mode: "element", xpath }`.
+3. Calls `captureElement()` (1920×7000 @ user scale, auto-expands up to 16384 px per the element pipeline).
+
+If the post/story is no longer present by the time the user clicks (page navigated, post deleted), `captureSiteElement` throws "No element target detected" and the popup surfaces the error — it does **not** silently fall through to a full-page capture.
+
+Profile and unknown pages have no entry in `PROMPT_LABELS` ([popup.js](popup.js)) and never show the prompt — those flows go through Auto Capture or Page Capture.
+
+Supported sites: Facebook, Instagram, Telegram (t.me), X / Twitter, VK. Site modules are intentionally independent files so adding a host = drop a new file under [contentScripts/sites/](contentScripts/sites/) and add one line to `SITE_MODULES`. **Each module's IIFE must honor `window.__ctaSiteOptions?.detectOnly`** — early-return with `{ mode: "detect", pageType }` before any DOM mutation, otherwise simply opening the popup will mutate the user's page.
+
+Site modules do not touch `document.body.style.zoom` — captures leave the user's zoom alone. Only element-mode capture changes zoom (via `chrome.tabs.setZoom`, restored after), and only when needed for accurate cropping.
 
 ---
 

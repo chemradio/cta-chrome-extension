@@ -1,24 +1,25 @@
-// Auto Mode orchestrator.
+// Auto Mode and site-aware element capture.
 //
-// Pipeline:
-//   1. Run AdRemover (lazy-refresh filters, inject adRemover.js).
-//   2. Pick a site module by hostname.
-//   3. If a module matches, inject _xpath.js + the site script and await
-//      window.__ctaAutoCapturePending — site modules resolve this with
-//      { mode: "element", xpath } or { mode: "page" }.
-//   4. Dispatch to element capture (existing pipeline) or full-page capture.
+// Three entry points:
 //
-// Unknown hosts (or modules that return { mode: "page" }) fall through to
-// Full Page @ user-selected scale. Per CLAUDE.md the documented fallback is
-// 2× — honoring the popup's scale lets the user override that without
-// editing code.
+//   runAutoCapture        — Auto Capture button. AdRemover + cleanup.js +
+//                           full-page capture. No site-module dispatch, no
+//                           element-capture fallback.
+//   detectSite            — Called by the popup on open. Injects the site
+//                           module in detect-only mode and reports
+//                           { module, pageType }. Non-destructive: the
+//                           module's cleanup/xpath pipeline is skipped.
+//   captureSiteElement    — Called by the popup's "Capture this <X>" prompt
+//                           button. Runs AdRemover + the full site-module
+//                           pipeline (which cleans surrounding chrome and
+//                           returns an xpath) + element capture.
 
 import { emulateCaptureViewport } from "./emulatedViewportCapture.js";
 import { captureElement } from "./elementSelect/elementClickListener.js";
 import { refreshIfStale } from "../adRemover/refreshFilters.js";
 
 // hostname → site module file (under contentScripts/sites/<name>.js)
-const SITE_MODULES = {
+export const SITE_MODULES = {
     "www.facebook.com": "facebook",
     "facebook.com": "facebook",
     "m.facebook.com": "facebook",
@@ -36,8 +37,57 @@ const SITE_MODULES = {
 
 const FULL_PAGE_HEIGHT_CAP = 16000; // CDP cap is 16384; leave headroom
 
-function pickModule(hostname) {
+// URL gates for the popup's detect prompt. Without these, DOM selectors
+// like `article` (Instagram), `[data-pagelet="GroupFeed"]` (Facebook), or
+// `article[tabindex="-1"]` (X) match on feed/profile pages and the popup
+// false-prompts a "Capture this post" button. The pipeline still trusts
+// the module's pageType for labeling once the URL passes the gate.
+const SITE_URL_PATTERNS = {
+    facebook: [
+        /\/posts\//,
+        /\/permalink\//,
+        /\/photo(?:\.php|\/|\?)/,
+        /\/watch(?:\/|\?)/,
+        /\/reel\//,
+        /\/stories\//,
+        /\/share\/[pvr]\//,
+        /\/groups\/[^/]+\/(?:posts|permalink)\//,
+        /[?&]story_fbid=/,
+    ],
+    instagram: [
+        /\/(?:p|reel|tv)\/[^/?#]+/,
+        /\/stories\/[^/]+\/[^/?#]+/,
+    ],
+    telegram: [
+        // t.me/<channel>/<numeric-post-id> — channel landings have no /<n>.
+        /^\/[^/]+\/\d+(?:[/?#]|$)/,
+        /^\/s\/[^/]+\/\d+(?:[/?#]|$)/,
+    ],
+    x: [
+        /\/[^/]+\/status\/\d+/,
+    ],
+    vk: [
+        // /wall12345_67, /wall-12345_67, also ?w=wall...
+        /\/wall-?\d+_\d+/,
+        /[?&]w=wall-?\d+_\d+/,
+    ],
+};
+
+export function pickModule(hostname) {
     return SITE_MODULES[hostname] ?? null;
+}
+
+function urlLooksLikePostOrStory(moduleName, url) {
+    const patterns = SITE_URL_PATTERNS[moduleName];
+    if (!patterns) return false;
+    let pathAndQuery;
+    try {
+        const u = new URL(url);
+        pathAndQuery = u.pathname + u.search;
+    } catch {
+        return false;
+    }
+    return patterns.some((re) => re.test(pathAndQuery));
 }
 
 function measurePageHeight(tabId) {
@@ -77,7 +127,15 @@ async function runAdRemover(tabId) {
     }
 }
 
-async function loadSiteModule(tabId, moduleName) {
+// Two-step injection: first set window.__ctaSiteOptions so the IIFE can
+// branch on detectOnly, then inject the module itself. Modules are
+// re-injectable — each invocation overwrites window.__ctaAutoCapturePending.
+async function injectSiteModule(tabId, moduleName, options) {
+    await chrome.scripting.executeScript({
+        target: { tabId },
+        func: (opts) => { window.__ctaSiteOptions = opts; },
+        args: [options ?? {}],
+    });
     await chrome.scripting.executeScript({
         target: { tabId },
         files: [
@@ -85,7 +143,6 @@ async function loadSiteModule(tabId, moduleName) {
             `contentScripts/sites/${moduleName}.js`,
         ],
     });
-
     const [{ result: plan }] = await chrome.scripting.executeScript({
         target: { tabId },
         func: () => window.__ctaAutoCapturePending,
@@ -111,36 +168,70 @@ export async function runAutoCapture({ tabId, url, settings, screenshotSuffix })
     const scale = settings.deviceScaleFactor || 2;
 
     await runAdRemover(tabId);
+    try {
+        await chrome.scripting.executeScript({
+            target: { tabId },
+            files: ["contentScripts/cleanup.js"],
+        });
+    } catch (e) {
+        console.warn("[CTA] Auto: cleanup.js injection failed:", e);
+    }
 
     const host = new URL(url).hostname;
+    await captureFullPage(tabId, scale, `auto-${screenshotSuffix}`);
+    return { mode: "page", host };
+}
+
+// Non-destructive site detection for the popup prompt. Returns the page
+// type the site module recognized so the popup can offer a targeted
+// "Capture this <post|story|...>" button.
+export async function detectSite({ tabId, url }) {
+    const host = new URL(url).hostname;
     const moduleName = pickModule(host);
+    if (!moduleName) return { module: null, pageType: null };
 
-    if (!moduleName) {
-        console.log(`[CTA] Auto: no module for ${host} — full page @ ${scale}×`);
-        await captureFullPage(tabId, scale, `auto-${screenshotSuffix}`);
-        return { mode: "page-fallback", host };
+    // URL gate first — many in-page detectors match on feed/profile pages
+    // too. Without this filter the popup would prompt "Capture this post"
+    // on a Facebook group feed or an Instagram explore page.
+    if (!urlLooksLikePostOrStory(moduleName, url)) {
+        return { module: moduleName, pageType: null };
     }
 
-    console.log(`[CTA] Auto: ${host} → module ${moduleName}`);
-    const plan = await loadSiteModule(tabId, moduleName);
+    try {
+        const plan = await injectSiteModule(tabId, moduleName, { detectOnly: true });
+        return { module: moduleName, pageType: plan?.pageType ?? null };
+    } catch (e) {
+        console.warn("[CTA] detectSite failed:", e);
+        return { module: moduleName, pageType: null };
+    }
+}
 
-    if (plan?.mode === "element" && plan.xpath) {
-        await captureElement({
-            tabId,
-            xpath: plan.xpath,
-            // 1920×7000 viewport gives most posts room without expansion;
-            // the element pipeline auto-expands up to 16384px if needed.
-            deviceMetrics: {
-                width: 1920,
-                height: 7000,
-                deviceScaleFactor: scale,
-                mobile: false,
-            },
-            screenshotSuffix: `auto-${moduleName}-${screenshotSuffix}`,
-        });
-        return { mode: "element", module: moduleName };
+// Prompt-triggered element capture. Runs the full site-module pipeline
+// (cleanup + xpath build) and crops to the returned element. Errors if
+// the page no longer offers an element target.
+export async function captureSiteElement({ tabId, url, settings, screenshotSuffix }) {
+    const scale = settings.deviceScaleFactor || 2;
+    const host = new URL(url).hostname;
+    const moduleName = pickModule(host);
+    if (!moduleName) throw new Error(`No site module for ${host}`);
+
+    await runAdRemover(tabId);
+    const plan = await injectSiteModule(tabId, moduleName, { detectOnly: false });
+
+    if (plan?.mode !== "element" || !plan.xpath) {
+        throw new Error("No element target detected on this page");
     }
 
-    await captureFullPage(tabId, scale, `auto-${moduleName}-${screenshotSuffix}`);
-    return { mode: "page", module: moduleName };
+    await captureElement({
+        tabId,
+        xpath: plan.xpath,
+        deviceMetrics: {
+            width: 1920,
+            height: 7000,
+            deviceScaleFactor: scale,
+            mobile: false,
+        },
+        screenshotSuffix: `${moduleName}-${screenshotSuffix}`,
+    });
+    return { mode: "element", module: moduleName };
 }
