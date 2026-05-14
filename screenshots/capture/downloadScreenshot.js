@@ -7,6 +7,7 @@ export const downloadScreenshot = (base64Data, screenshotName) =>
             {
                 url: "data:image/png;base64," + base64Data,
                 filename: screenshotName + ".png",
+                saveAs: true,
             },
             (downloadId) => {
                 const err = chrome.runtime.lastError;
