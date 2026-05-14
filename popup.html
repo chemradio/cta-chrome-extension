@@ -12,16 +12,16 @@
     <body>
         <div class="popup">
             <header>
-                <span class="header-title" id="header-title"
-                    >CTA Screenshot Helper</span
-                >
+                <span class="header-title" id="header-title">Sharpshooter</span>
                 <button
                     type="button"
                     id="help-toggle"
                     class="help-toggle"
                     title="Help"
                     aria-label="Help"
-                >?</button>
+                >
+                    ?
+                </button>
                 <label
                     class="mode-toggle"
                     for="mode-toggle-input"
@@ -361,36 +361,77 @@
 
                     <div class="help-block">
                         <div class="help-heading">Auto Capture</div>
-                        <p>One-click capture tuned to the current site. The extension recognizes posts on Facebook, Instagram, Telegram (t.me), X / Twitter and VK, removes comments, sidebars and other clutter around the post, and captures just the post area. On unknown sites it falls back to a full-page capture.</p>
+                        <p>
+                            One-click capture tuned to the current site. The
+                            extension recognizes posts on Facebook, Instagram,
+                            Telegram (t.me), X / Twitter and VK, removes
+                            comments, sidebars and other clutter around the
+                            post, and captures just the post area. On unknown
+                            sites it falls back to a full-page capture.
+                        </p>
                     </div>
 
                     <div class="help-block">
                         <div class="help-heading">Page Capture</div>
-                        <p>Captures the whole page at a chosen resolution. Pick a preset:</p>
+                        <p>
+                            Captures the whole page at a chosen resolution. Pick
+                            a preset:
+                        </p>
                         <ul>
-                            <li><b>Full Page</b> — 1920 wide, full document height (measured live).</li>
-                            <li><b>Vertical</b> — 1920 × 7000, good for long social posts.</li>
+                            <li>
+                                <b>Full Page</b> — 1920 wide, full document
+                                height (measured live).
+                            </li>
+                            <li>
+                                <b>Vertical</b> — 1920 × 7000, good for long
+                                social posts.
+                            </li>
                             <li><b>Horizontal</b> — 1920 × 1080.</li>
                             <li><b>4K</b> — 3840 × 2160.</li>
                             <li><b>Custom</b> — your own width × height.</li>
                         </ul>
-                        <p>The page is emulated at this resolution before capture, so layouts adapt as if the window were that size.</p>
+                        <p>
+                            The page is emulated at this resolution before
+                            capture, so layouts adapt as if the window were that
+                            size.
+                        </p>
                     </div>
 
                     <div class="help-block">
                         <div class="help-heading">Capture Element</div>
-                        <p>Click the button, then hover any element on the page. A cyan glow shows what will be captured. Use the <b>scroll wheel</b> to change depth (up = parent, down = first child). Click to commit.</p>
+                        <p>
+                            Click the button, then hover any element on the
+                            page. A cyan glow shows what will be captured. Use
+                            the <b>scroll wheel</b> to change depth (up =
+                            parent, down = first child). Click to commit.
+                        </p>
                     </div>
 
                     <div class="help-block">
                         <div class="help-heading">Quality multiplier</div>
-                        <p>1× / 2× / 3× / 4× — scales pixel density. 2× is the default and works well for most uses. 3×–4× produces large but very sharp images suitable for print or motion graphics.</p>
+                        <p>
+                            1× / 2× / 3× / 4× — scales pixel density. 2× is the
+                            default and works well for most uses. 3×–4× produces
+                            large but very sharp images suitable for print or
+                            motion graphics.
+                        </p>
                     </div>
 
                     <div class="help-block">
                         <div class="help-heading">Helpers</div>
-                        <p><b>Cleanup</b> — runs the ad-remover and per-site cleanup once on the current page, without taking a screenshot. Useful before Page Capture if Auto isn't the right mode.</p>
-                        <p><b>Remove Elements</b> — manual click-to-remove mode. Hover targets, scroll to change depth, click to delete. ESC to stop. Removed selectors are saved as your personal filters (see Expert mode for managing them).</p>
+                        <p>
+                            <b>Cleanup</b> — runs the ad-remover and per-site
+                            cleanup once on the current page, without taking a
+                            screenshot. Useful before Page Capture if Auto isn't
+                            the right mode.
+                        </p>
+                        <p>
+                            <b>Remove Elements</b> — manual click-to-remove
+                            mode. Hover targets, scroll to change depth, click
+                            to delete. ESC to stop. Removed selectors are saved
+                            as your personal filters (see Expert mode for
+                            managing them).
+                        </p>
                     </div>
                 </div>
 
@@ -399,34 +440,92 @@
 
                     <div class="help-block">
                         <div class="help-heading">Three filter tiers</div>
-                        <p>When you run Cleanup or Auto Capture, three sources of filters are merged:</p>
+                        <p>
+                            When you run Cleanup or Auto Capture, three sources
+                            of filters are merged:
+                        </p>
                         <ul>
-                            <li><b>EasyList</b> — the standard adblock cosmetic filter list. Refreshed from easylist.to automatically (weekly).</li>
-                            <li><b>Bundled filters</b> — hand-curated selectors shipped with the extension for sites the dev has tuned. Updated when the extension updates.</li>
-                            <li><b>User filters</b> — selectors <i>you</i> collect, either via "Remove Elements" (which auto-saves each click) or by typing them in here.</li>
+                            <li>
+                                <b>EasyList</b> — the standard adblock cosmetic
+                                filter list. Refreshed from easylist.to
+                                automatically (weekly).
+                            </li>
+                            <li>
+                                <b>Bundled filters</b> — hand-curated selectors
+                                shipped with the extension for sites the dev has
+                                tuned. Updated when the extension updates.
+                            </li>
+                            <li>
+                                <b>User filters</b> — selectors
+                                <i>you</i> collect, either via "Remove Elements"
+                                (which auto-saves each click) or by typing them
+                                in here.
+                            </li>
                         </ul>
-                        <p>Duplicates between tiers collapse automatically, so promoting a user filter to the bundled list is non-disruptive.</p>
+                        <p>
+                            Duplicates between tiers collapse automatically, so
+                            promoting a user filter to the bundled list is
+                            non-disruptive.
+                        </p>
                     </div>
 
                     <div class="help-block">
                         <div class="help-heading">Adding filters manually</div>
-                        <p>Paste a CSS selector into the input, or paste a fragment like <code>class="foo bar"</code> or <code>&lt;div data-testid="ad"&gt;</code> — it gets converted to a valid selector automatically. Preview shows the normalized form before adding.</p>
+                        <p>
+                            Paste a CSS selector into the input, or paste a
+                            fragment like <code>class="foo bar"</code> or
+                            <code>&lt;div data-testid="ad"&gt;</code> — it gets
+                            converted to a valid selector automatically. Preview
+                            shows the normalized form before adding.
+                        </p>
                         <ul>
-                            <li><b>This host</b> — applies only on the current domain (and subdomains).</li>
-                            <li><b>All hosts</b> — applies everywhere. Use sparingly.</li>
-                            <li><b>Target parent element</b> — wraps the selector in <code>*:has(&gt; …)</code> so the parent gets removed instead of the matched element. Good for "remove the card that contains this badge".</li>
+                            <li>
+                                <b>This host</b> — applies only on the current
+                                domain (and subdomains).
+                            </li>
+                            <li>
+                                <b>All hosts</b> — applies everywhere. Use
+                                sparingly.
+                            </li>
+                            <li>
+                                <b>Target parent element</b> — wraps the
+                                selector in <code>*:has(&gt; …)</code> so the
+                                parent gets removed instead of the matched
+                                element. Good for "remove the card that contains
+                                this badge".
+                            </li>
                         </ul>
                     </div>
 
                     <div class="help-block">
-                        <div class="help-heading">Managing your filter list</div>
-                        <p>Filters for the current host are listed under the host name; global filters under "All hosts". Click <b>×</b> on a row to remove that one. The <b>Clear Domain Filters</b> and <b>Clear Global Filters</b> buttons wipe entire tiers (EasyList and bundled are untouched).</p>
-                        <p><b>Disable bundled filters</b> turns off the dev-curated tier — useful for debugging which tier is causing unwanted removals.</p>
+                        <div class="help-heading">
+                            Managing your filter list
+                        </div>
+                        <p>
+                            Filters for the current host are listed under the
+                            host name; global filters under "All hosts". Click
+                            <b>×</b> on a row to remove that one. The
+                            <b>Clear Domain Filters</b> and
+                            <b>Clear Global Filters</b> buttons wipe entire
+                            tiers (EasyList and bundled are untouched).
+                        </p>
+                        <p>
+                            <b>Disable bundled filters</b> turns off the
+                            dev-curated tier — useful for debugging which tier
+                            is causing unwanted removals.
+                        </p>
                     </div>
 
                     <div class="help-block">
                         <div class="help-heading">Exporting filters</div>
-                        <p><b>Export Filters</b> downloads your collected user filters as a JSON file (shape: <code>{global, domains}</code>). Email this to the extension dev — selectors worth sharing get merged into the bundled list and propagated to everyone in the next update.</p>
+                        <p>
+                            <b>Export Filters</b> downloads your collected user
+                            filters as a JSON file (shape:
+                            <code>{global, domains}</code>). Email this to the
+                            extension dev — selectors worth sharing get merged
+                            into the bundled list and propagated to everyone in
+                            the next update.
+                        </p>
                     </div>
                 </div>
             </div>

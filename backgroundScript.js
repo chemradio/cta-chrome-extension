@@ -65,6 +65,17 @@ function buildTimestampSuffix(url) {
     return `${domain}-${ts}`;
 }
 
+// chrome://, edge://, chrome-extension://, the Web Store, view-source:, file: (when
+// "Allow access to file URLs" is off), etc. — chrome.scripting.executeScript fails
+// on all of these. Detect upfront so we don't surface scary-looking errors for
+// expected restrictions.
+function isRestrictedUrl(url) {
+    if (!url) return true;
+    return /^(chrome|edge|about|chrome-extension|chrome-search|chrome-untrusted|devtools|view-source):/i.test(url)
+        || /^https?:\/\/chromewebstore\.google\.com\//i.test(url)
+        || /^https?:\/\/chrome\.google\.com\/webstore\//i.test(url);
+}
+
 function getPageHeight(tabId) {
     return new Promise((resolve, reject) => {
         chrome.scripting.executeScript(
@@ -237,6 +248,7 @@ async function handleAction(request) {
 
     switch (request.action) {
         case "getPageHeight": {
+            if (isRestrictedUrl(tab.url)) return { pageHeight: null };
             const pageHeight = await getPageHeight(tab.id);
             return { pageHeight };
         }

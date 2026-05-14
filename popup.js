@@ -62,7 +62,7 @@ function updateResolutionInputs() {
         widthInput.disabled  = true;
         heightInput.disabled = true;
         widthInput.value     = 1920;
-        heightInput.value    = "…";
+        heightInput.value    = "";
         setStatus("Measuring page height…");
         chrome.runtime.sendMessage({ action: "getPageHeight" }, (response) => {
             if (chrome.runtime.lastError || !response || response.ok === false) {
