@@ -22,7 +22,6 @@
         "type": "module"
     },
     "permissions": [
-        "contextMenus",
         "debugger",
         "downloads",
         "activeTab",

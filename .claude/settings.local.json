@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"\\\\\\\\bishkeknas03\\\\CurrentTimeAsia\\\\GRAPHICS\\\\Timur Edit\\\\cta-chrome-extension\\\\contextMenus\\\\\")",
+      "Bash(rm -rf \"\\\\\\\\\\\\\\\\bishkeknas03\\\\\\\\CurrentTimeAsia\\\\\\\\GRAPHICS\\\\\\\\Timur Edit\\\\\\\\cta-chrome-extension\\\\\\\\contextMenus\")",
+      "Bash(rm -f \"\\\\\\\\\\\\\\\\bishkeknas03\\\\\\\\CurrentTimeAsia\\\\\\\\GRAPHICS\\\\\\\\Timur Edit\\\\\\\\cta-chrome-extension\\\\\\\\screenshots\\\\\\\\emulation\\\\\\\\emulationOptions.js\")",
+      "Read(///bishkeknas03/CurrentTimeAsia/GRAPHICS/Timur Edit/cta-chrome-extension/screenshots/**)",
+      "Read(///bishkeknas03/CurrentTimeAsia/GRAPHICS/Timur Edit/**)"
+    ]
+  }
+}

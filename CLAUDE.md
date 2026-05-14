@@ -8,10 +8,7 @@ This document describes the current implementation. Aspirational features are sp
 
 ## Entry points
 
-Two ways to trigger a capture:
-
-1. **Toolbar popup** ([popup.html](popup.html) / [popup.js](popup.js)) — main UI with resolution, scale, cleanup options, and three action buttons: **Capture Page**, **Capture Element**, and **Auto**. When opened on a supported site (Facebook, Instagram, Telegram, X, VK) the popup also runs a non-destructive site-detection pass and surfaces a "Capture this <post/story>" button at the top if a target is recognized.
-2. **Right-click context menu** ([contextMenus/](contextMenus/)) — quick presets defined in [screenshots/emulation/emulationOptions.js](screenshots/emulation/emulationOptions.js) plus an "Element Screenshot" entry. Skips the popup; uses hard-coded device metrics.
+All captures are triggered from the **toolbar popup** ([popup.html](popup.html) / [popup.js](popup.js)) — main UI with resolution, scale, cleanup options, and three action buttons: **Capture Page**, **Capture Element**, and **Auto**. When opened on a supported site (Facebook, Instagram, Telegram, X, VK) the popup also runs a non-destructive site-detection pass and surfaces a "Capture this <post/story>" button at the top if a target is recognized.
 
 ---
 

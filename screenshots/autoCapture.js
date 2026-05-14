@@ -151,13 +151,19 @@ async function injectSiteModule(tabId, moduleName, options) {
 }
 
 async function captureFullPage(tabId, scale, screenshotSuffix) {
+    const zoom = await chrome.tabs.getZoom(tabId).catch(() => 1);
+    // pageHeight is measured in live-viewport CSS pixels, which already
+    // reflect the user's zoom (the layout viewport narrows under zoom,
+    // and scrollHeight is reported in that frame). Emulating the same
+    // narrowed width keeps that layout intact, so the measured height
+    // still applies directly.
     const pageHeight = await measurePageHeight(tabId);
     await emulateCaptureViewport(
         tabId,
         {
-            width: 1920,
+            width: Math.round(1920 / zoom),
             height: Math.min(pageHeight, FULL_PAGE_HEIGHT_CAP),
-            deviceScaleFactor: scale,
+            deviceScaleFactor: scale * zoom,
             mobile: false,
         },
         screenshotSuffix

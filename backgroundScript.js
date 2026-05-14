@@ -1,5 +1,3 @@
-import { createContextMenus } from "./contextMenus/createContextMenus.js";
-import { addContextMenusListener } from "./contextMenus/contextMenuListener.js";
 import { emulateCaptureViewport } from "./screenshots/emulatedViewportCapture.js";
 import { addElementClickedListener } from "./screenshots/elementSelect/elementClickListener.js";
 import { refreshFilters, refreshIfStale } from "./adRemover/refreshFilters.js";
@@ -10,8 +8,6 @@ import {
 } from "./screenshots/autoCapture.js";
 
 addElementClickedListener();
-createContextMenus();
-addContextMenusListener();
 
 // Hydrate adblock filters on browser start and on install/update. These
 // are the two events that fire predictably across a service-worker lifetime;
@@ -242,10 +238,10 @@ async function handleAction(request) {
     const tab = await getActiveTab();
     const settings = request.settings ?? {};
 
-    const deviceMetrics = {
+    const baseMetrics = {
         width: settings.width || 1920,
         height: settings.height || 1080,
-        deviceScaleFactor: settings.deviceScaleFactor || 1,
+        deviceScaleFactor: settings.deviceScaleFactor || 2,
         mobile: settings.mobile || false,
     };
     const screenshotSuffix = buildTimestampSuffix(tab.url);
@@ -258,6 +254,22 @@ async function handleAction(request) {
         }
 
         case "capturePage": {
+            const zoom = await chrome.tabs.getZoom(tab.id).catch(() => 1);
+            // Honor the user's browser zoom: emulate a CSS viewport narrower
+            // by `zoom`, and bump deviceScaleFactor by the same factor so the
+            // output pixel size matches the user-selected resolution. For the
+            // Full Page preset the height was already measured at the user's
+            // current zoom (CSS-pixel scrollHeight in the live viewport),
+            // so dividing it again would cut the bottom of the page off.
+            const isFullPage = settings.layout === "fullpage";
+            const deviceMetrics = {
+                ...baseMetrics,
+                width: Math.round(baseMetrics.width / zoom),
+                height: isFullPage
+                    ? baseMetrics.height
+                    : Math.round(baseMetrics.height / zoom),
+                deviceScaleFactor: baseMetrics.deviceScaleFactor * zoom,
+            };
             await emulateCaptureViewport(
                 tab.id,
                 deviceMetrics,
@@ -267,13 +279,16 @@ async function handleAction(request) {
         }
 
         case "captureElement": {
+            // Element capture handles zoom on its own (resets to 1 for
+            // accurate crop coordinates, restores after), so pass the
+            // un-adjusted device metrics through.
             await chrome.scripting.executeScript({
                 target: { tabId: tab.id },
                 files: ["contentScripts/elementHighlighter.js"],
             });
             await chrome.tabs.sendMessage(tab.id, {
                 action: "sendDeviceMetrics",
-                deviceMetrics,
+                deviceMetrics: baseMetrics,
                 screenshotSuffix,
             });
             return {};
