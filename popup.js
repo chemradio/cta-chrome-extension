@@ -295,6 +295,23 @@ disableBundledCb.addEventListener("change", () => {
         2000
     );
 });
+// Re-encode PNG opaque — off by default; the stored value sticks across opens.
+const reencodeOpaqueCb = document.getElementById("reencode-opaque");
+
+chrome.storage.local.get("reencodeOpaquePng").then(({ reencodeOpaquePng }) => {
+    reencodeOpaqueCb.checked = !!reencodeOpaquePng;
+});
+
+reencodeOpaqueCb.addEventListener("change", () => {
+    const enabled = reencodeOpaqueCb.checked;
+    chrome.storage.local.set({ reencodeOpaquePng: enabled });
+    setStatus(
+        enabled ? "Opaque PNG re-encode on" : "Opaque PNG re-encode off",
+        "ok",
+        2000
+    );
+});
+
 const viewNormal       = document.getElementById("view-normal");
 const viewExpert       = document.getElementById("view-expert");
 const filterHostEl     = document.getElementById("filter-host");

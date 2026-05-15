@@ -641,6 +641,13 @@ button:active {
     accent-color: var(--danger);
 }
 
+.expert-note {
+    margin: 4px 2px 0;
+    font-size: 10px;
+    line-height: 1.4;
+    color: var(--text-muted);
+}
+
 .filter-preview {
     font-family: 'Consolas', 'Menlo', monospace;
     font-size: 11px;

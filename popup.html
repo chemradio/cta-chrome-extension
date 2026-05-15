@@ -399,6 +399,22 @@
                             Clear Global Filters
                         </button>
                     </section>
+
+                    <div class="divider"></div>
+
+                    <section>
+                        <div class="section-label">Output</div>
+                        <label class="filter-parent" for="reencode-opaque">
+                            <input type="checkbox" id="reencode-opaque" />
+                            <span>Re-encode PNG opaque</span>
+                        </label>
+                        <p class="expert-note">
+                            Flattens captures onto a white background and strips
+                            the alpha channel and colour-profile chunks. Fixes
+                            Adobe ScriptUI / Direct2D drawbot panels that reject
+                            the screenshots (HRESULT 0x80070057).
+                        </p>
+                    </section>
                 </div>
             </div>
 
