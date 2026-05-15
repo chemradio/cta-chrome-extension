@@ -13,7 +13,7 @@ addElementClickedListener();
 // are the two events that fire predictably across a service-worker lifetime;
 // "Remove ADs" itself lazily refreshes via refreshIfStale() as a fallback.
 const logRefreshFailure = (where) => (e) =>
-    console.error(`[CTA] filter refresh on ${where} failed:`, e);
+    console.error(`filter refresh on ${where} failed:`, e);
 
 chrome.runtime.onStartup.addListener(() => {
     refreshFilters().catch(logRefreshFailure("startup"));
@@ -21,7 +21,7 @@ chrome.runtime.onStartup.addListener(() => {
 chrome.runtime.onInstalled.addListener(() => {
     refreshFilters().catch(logRefreshFailure("install"));
     loadBundledFilters().catch((e) =>
-        console.error("[CTA] bundled-filter load failed:", e)
+        console.error("bundled-filter load failed:", e)
     );
 });
 
@@ -40,7 +40,7 @@ async function loadBundledFilters() {
     await chrome.storage.local.set({ bundledFilters });
     const hostCount = Object.keys(bundledFilters.domains).length;
     console.log(
-        `[CTA] bundled filters loaded: ${bundledFilters.global.length} global, ` +
+        `bundled filters loaded: ${bundledFilters.global.length} global, ` +
             `${hostCount} domain entries`
     );
 }
@@ -108,7 +108,7 @@ function getPageHeight(tabId) {
 async function runCleanup(tabId) {
     // Lazy-hydrate filters in case onInstalled/onStartup fetch hasn't landed.
     await refreshIfStale().catch((e) =>
-        console.warn("[CTA] refreshIfStale failed:", e)
+        console.warn("refreshIfStale failed:", e)
     );
     const adResults = await chrome.scripting.executeScript({
         target: { tabId },
@@ -161,7 +161,7 @@ async function exportUserFilters() {
 
     await chrome.downloads.download({
         url: dataUrl,
-        filename: `cta-userFilters-${stamp}.json`,
+        filename: `userFilters-${stamp}.json`,
         saveAs: true,
     });
 

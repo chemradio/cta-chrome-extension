@@ -42,7 +42,7 @@ export const downloadScreenshot = async (base64Data, screenshotName) => {
         if (reencodeOpaquePng) data = await reencodeOpaque(base64Data);
     } catch (e) {
         // Re-encode is a compatibility nicety — never fail the download over it.
-        console.warn("[CTA] opaque PNG re-encode failed, using original:", e);
+        console.warn("opaque PNG re-encode failed, using original:", e);
     }
 
     return new Promise((resolve, reject) => {

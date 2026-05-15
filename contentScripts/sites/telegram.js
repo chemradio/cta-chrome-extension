@@ -80,26 +80,26 @@
         return { iframe, sameOrigin: true, removed };
     };
 
-    window.__ctaAutoCapturePending = (async () => {
+    window.__AutoCapturePending = (async () => {
         try {
             const pageType = getPageType();
-            if (window.__ctaSiteOptions?.detectOnly) {
+            if (window.__SiteOptions?.detectOnly) {
                 return { mode: "detect", pageType };
             }
             console.log(
-                `[CTA Auto/telegram] page=${pageType} via=${detectorHit ?? "none"}`
+                `[Auto/telegram] page=${pageType} via=${detectorHit ?? "none"}`
             );
 
             if (pageType === "post") {
                 const { iframe, sameOrigin, removed } = stripIframeChrome();
                 console.log(
-                    `[CTA Auto/telegram] iframe=${!!iframe} sameOrigin=${sameOrigin} stripped=${removed}`
+                    `[Auto/telegram] iframe=${!!iframe} sameOrigin=${sameOrigin} stripped=${removed}`
                 );
-                console.log(`[CTA Auto/telegram] target=${iframe ? "iframe" : "MISS"}`);
+                console.log(`[Auto/telegram] target=${iframe ? "iframe" : "MISS"}`);
                 if (iframe)
                     return {
                         mode: "element",
-                        xpath: window.__ctaBuildXPath(iframe),
+                        xpath: window.__BuildXPath(iframe),
                     };
             }
             if (pageType === "profile") {
@@ -107,7 +107,7 @@
             }
             return { mode: "page" };
         } catch (e) {
-            console.warn("[CTA Auto/telegram]", e);
+            console.warn("[Auto/telegram]", e);
             return { mode: "page" };
         }
     })();

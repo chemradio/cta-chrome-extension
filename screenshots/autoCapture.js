@@ -123,17 +123,17 @@ async function runAdRemover(tabId) {
         });
     } catch (e) {
         // Ad removal is best-effort. A failure here shouldn't block capture.
-        console.warn("[CTA] Auto: ad removal step failed:", e);
+        console.warn("Auto: ad removal step failed:", e);
     }
 }
 
-// Two-step injection: first set window.__ctaSiteOptions so the IIFE can
+// Two-step injection: first set window.__SiteOptions so the IIFE can
 // branch on detectOnly, then inject the module itself. Modules are
-// re-injectable — each invocation overwrites window.__ctaAutoCapturePending.
+// re-injectable — each invocation overwrites window.__AutoCapturePending.
 async function injectSiteModule(tabId, moduleName, options) {
     await chrome.scripting.executeScript({
         target: { tabId },
-        func: (opts) => { window.__ctaSiteOptions = opts; },
+        func: (opts) => { window.__SiteOptions = opts; },
         args: [options ?? {}],
     });
     await chrome.scripting.executeScript({
@@ -145,7 +145,7 @@ async function injectSiteModule(tabId, moduleName, options) {
     });
     const [{ result: plan }] = await chrome.scripting.executeScript({
         target: { tabId },
-        func: () => window.__ctaAutoCapturePending,
+        func: () => window.__AutoCapturePending,
     });
     return plan;
 }
@@ -180,7 +180,7 @@ export async function runAutoCapture({ tabId, url, settings, screenshotSuffix })
             files: ["contentScripts/cleanup.js"],
         });
     } catch (e) {
-        console.warn("[CTA] Auto: cleanup.js injection failed:", e);
+        console.warn("Auto: cleanup.js injection failed:", e);
     }
 
     const host = new URL(url).hostname;
@@ -207,7 +207,7 @@ export async function detectSite({ tabId, url }) {
         const plan = await injectSiteModule(tabId, moduleName, { detectOnly: true });
         return { module: moduleName, pageType: plan?.pageType ?? null };
     } catch (e) {
-        console.warn("[CTA] detectSite failed:", e);
+        console.warn("detectSite failed:", e);
         return { module: moduleName, pageType: null };
     }
 }

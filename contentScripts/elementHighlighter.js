@@ -1,8 +1,8 @@
 (function () {
     // Guard against double-injection: if a previous instance is running, clean it up first.
     // window is the shared isolated-world window, so this persists across executeScript calls.
-    if (window.__ctaHighlighterDestroy) {
-        window.__ctaHighlighterDestroy();
+    if (window.__HighlighterDestroy) {
+        window.__HighlighterDestroy();
     }
 
     // ─── State ────────────────────────────────────────────────────────────────
@@ -11,7 +11,7 @@
     let screenshotSuffix = null;
     let currentElement = null;
 
-    const STYLE_ID = "__cta-hl-style";
+    const STYLE_ID = "__hl-style";
 
     // Hover is committed only after the pointer has moved at least this many px
     // from the last committed position AND been still for HOVER_DEBOUNCE_MS.
@@ -46,14 +46,14 @@
         const style = document.createElement("style");
         style.id = STYLE_ID;
         style.textContent = `
-            @keyframes __ctaGlow {
+            @keyframes __Glow {
                 0%   { box-shadow: 0 0 5px 2px #0ECAE3; }
                 50%  { box-shadow: 0 0 18px 6px #0ECAE3; }
                 100% { box-shadow: 0 0 5px 2px #0ECAE3; }
             }
-            .__cta-highlighted {
+            .__highlighted {
                 outline: 2px solid #0ECAE3 !important;
-                animation: __ctaGlow 1s infinite;
+                animation: __Glow 1s infinite;
                 cursor: crosshair !important;
             }
         `;
@@ -93,9 +93,9 @@
     // ─── Highlight ────────────────────────────────────────────────────────────
 
     function highlight(el) {
-        if (currentElement) currentElement.classList.remove("__cta-highlighted");
+        if (currentElement) currentElement.classList.remove("__highlighted");
         currentElement = el;
-        if (currentElement) currentElement.classList.add("__cta-highlighted");
+        if (currentElement) currentElement.classList.add("__highlighted");
     }
 
     // ─── Event handlers ───────────────────────────────────────────────────────
@@ -169,7 +169,7 @@
 
         // Remove highlight before computing xpath so any class-based xpath
         // doesn't capture our own decoration.
-        element.classList.remove("__cta-highlighted");
+        element.classList.remove("__highlighted");
 
         const xpath = getXPath(element);
 
@@ -196,15 +196,15 @@
         chrome.runtime.onMessage.removeListener(metricsListener);
 
         if (currentElement) {
-            currentElement.classList.remove("__cta-highlighted");
+            currentElement.classList.remove("__highlighted");
             currentElement = null;
         }
 
         document.getElementById(STYLE_ID)?.remove();
-        delete window.__ctaHighlighterDestroy;
+        delete window.__HighlighterDestroy;
     }
 
-    window.__ctaHighlighterDestroy = destroy;
+    window.__HighlighterDestroy = destroy;
 
     // ─── Attach (capture phase so we intercept before page handlers) ──────────
 

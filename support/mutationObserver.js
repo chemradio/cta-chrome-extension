@@ -19,7 +19,7 @@ export const waitForMutationSettle = (tabId, timeoutMs = SETTLE_TIMEOUT_MS) =>
             clearTimeout(timer);
             if (reason === "timeout") {
                 console.warn(
-                    `[CTA] mutation settle timed out after ${timeoutMs}ms on tab ${tabId} — proceeding anyway`
+                    `mutation settle timed out after ${timeoutMs}ms on tab ${tabId} — proceeding anyway`
                 );
             }
             resolve();

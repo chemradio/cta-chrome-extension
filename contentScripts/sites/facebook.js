@@ -1,6 +1,6 @@
 // Facebook Auto Mode module.
 //
-// Returns a capture plan on window.__ctaAutoCapturePending:
+// Returns a capture plan on window.__AutoCapturePending:
 //   { mode: "element", xpath } — capture a specific post / story / group post
 //   { mode: "page" }           — fall through to full-page capture
 //
@@ -138,9 +138,9 @@
         return document.querySelector('[data-pagelet="StoriesCardMedia"]');
     };
 
-    window.__ctaAutoCapturePending = (async () => {
+    window.__AutoCapturePending = (async () => {
         try {
-            if (window.__ctaSiteOptions?.detectOnly) {
+            if (window.__SiteOptions?.detectOnly) {
                 const pageType = getPageType();
                 return { mode: "detect", pageType };
             }
@@ -148,40 +148,40 @@
             const pageType = getPageType();
             const logged = isLoggedIn();
             console.log(
-                `[CTA Auto/facebook] page=${pageType} via=${detectorHit ?? "none"} logged=${logged}`
+                `[Auto/facebook] page=${pageType} via=${detectorHit ?? "none"} logged=${logged}`
             );
 
             if (pageType === "groupPost") {
                 const commentAs = removeCommentAs();
                 const seeMore = removeSeeMore();
-                console.log(`[CTA Auto/facebook] cleanup: COMMENT_AS=${commentAs} SEE_MORE=${seeMore}`);
+                console.log(`[Auto/facebook] cleanup: COMMENT_AS=${commentAs} SEE_MORE=${seeMore}`);
                 const el = getGroupPost();
-                console.log(`[CTA Auto/facebook] target=${el ? "groupPost" : "MISS"}`);
-                if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
+                console.log(`[Auto/facebook] target=${el ? "groupPost" : "MISS"}`);
+                if (el) return { mode: "element", xpath: window.__BuildXPath(el) };
             }
 
             if (pageType === "story") {
                 const el = await getStoryElement();
-                console.log(`[CTA Auto/facebook] target=${el ? "story" : "MISS"}`);
-                if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
+                console.log(`[Auto/facebook] target=${el ? "story" : "MISS"}`);
+                if (el) return { mode: "element", xpath: window.__BuildXPath(el) };
             }
 
             if (pageType === "post") {
                 const seeMore = removeSeeMore();
                 if (logged) {
                     const commentAs = removeCommentAs();
-                    console.log(`[CTA Auto/facebook] cleanup: COMMENT_AS=${commentAs} SEE_MORE=${seeMore}`);
+                    console.log(`[Auto/facebook] cleanup: COMMENT_AS=${commentAs} SEE_MORE=${seeMore}`);
                     let el = getDialogPostLogged();
                     let strat = el ? "dialogLogged" : null;
                     if (!el) { el = getVideoPost(); if (el) strat = "video"; }
                     if (!el) { el = getGroupPost(); if (el) strat = "groupPost"; }
-                    console.log(`[CTA Auto/facebook] target=${strat ?? "MISS"}`);
-                    if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
+                    console.log(`[Auto/facebook] target=${strat ?? "MISS"}`);
+                    if (el) return { mode: "element", xpath: window.__BuildXPath(el) };
                 } else {
-                    console.log(`[CTA Auto/facebook] cleanup: SEE_MORE=${seeMore}`);
+                    console.log(`[Auto/facebook] cleanup: SEE_MORE=${seeMore}`);
                     const el = getDialogPostUnlogged();
-                    console.log(`[CTA Auto/facebook] target=${el ? "dialogUnlogged" : "MISS"}`);
-                    if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
+                    console.log(`[Auto/facebook] target=${el ? "dialogUnlogged" : "MISS"}`);
+                    if (el) return { mode: "element", xpath: window.__BuildXPath(el) };
                 }
             }
 
@@ -189,13 +189,13 @@
                 const banner = removeBanner();
                 const commentAs = removeCommentAs();
                 const seeMore = removeSeeMore();
-                console.log(`[CTA Auto/facebook] cleanup: BANNER=${banner} COMMENT_AS=${commentAs} SEE_MORE=${seeMore}`);
+                console.log(`[Auto/facebook] cleanup: BANNER=${banner} COMMENT_AS=${commentAs} SEE_MORE=${seeMore}`);
                 return { mode: "page" };
             }
 
             return { mode: "page" };
         } catch (e) {
-            console.warn("[CTA Auto/facebook]", e);
+            console.warn("[Auto/facebook]", e);
             return { mode: "page" };
         }
     })();

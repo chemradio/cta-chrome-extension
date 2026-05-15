@@ -1,14 +1,14 @@
 (function () {
-    if (window.__ctaDomKillerDestroy) {
-        window.__ctaDomKillerDestroy();
+    if (window.__DomKillerDestroy) {
+        window.__DomKillerDestroy();
     }
 
     // ─── State ────────────────────────────────────────────────────────────────
 
     let currentElement = null;
 
-    const STYLE_ID   = "__cta-dk-style";
-    const BANNER_ID  = "__cta-dk-banner";
+    const STYLE_ID   = "__dk-style";
+    const BANNER_ID  = "__dk-banner";
     const COLOR      = "#FF0055";
 
     const MOVEMENT_THRESHOLD = 8;
@@ -30,14 +30,14 @@
         const style = document.createElement("style");
         style.id = STYLE_ID;
         style.textContent = `
-            @keyframes __ctaDkGlow {
+            @keyframes __DkGlow {
                 0%   { box-shadow: 0 0 5px 2px ${COLOR}; }
                 50%  { box-shadow: 0 0 18px 6px ${COLOR}; }
                 100% { box-shadow: 0 0 5px 2px ${COLOR}; }
             }
-            .__cta-dk-highlighted {
+            .__dk-highlighted {
                 outline: 2px solid ${COLOR} !important;
-                animation: __ctaDkGlow 1s infinite;
+                animation: __DkGlow 1s infinite;
                 cursor: crosshair !important;
             }
             /* Disable iframe interaction so ad clicks bubble to our document
@@ -78,9 +78,9 @@
     // ─── Highlight ────────────────────────────────────────────────────────────
 
     function highlight(el) {
-        if (currentElement) currentElement.classList.remove("__cta-dk-highlighted");
+        if (currentElement) currentElement.classList.remove("__dk-highlighted");
         currentElement = el;
-        if (currentElement) currentElement.classList.add("__cta-dk-highlighted");
+        if (currentElement) currentElement.classList.add("__dk-highlighted");
     }
 
     // ─── Event handlers ───────────────────────────────────────────────────────
@@ -155,7 +155,7 @@
 
         const element = currentElement;
         currentElement = null;
-        element.classList.remove("__cta-dk-highlighted");
+        element.classList.remove("__dk-highlighted");
 
         // Walk up to the nearest ancestor <a> and remove that instead so the
         // whole link block disappears, not just the inner node the cursor hit.
@@ -229,10 +229,10 @@
                 list.push(selector);
                 map[host] = list;
                 await chrome.storage.local.set({ userFilters: map });
-                console.log(`[CTA] DOM-killer saved: ${host} → ${selector}`);
+                console.log(`DOM-killer saved: ${host} → ${selector}`);
             }
         } catch (e) {
-            console.warn("[CTA] DOM-killer persist failed:", e);
+            console.warn("DOM-killer persist failed:", e);
         }
     }
 
@@ -269,16 +269,16 @@
         }
 
         if (currentElement) {
-            currentElement.classList.remove("__cta-dk-highlighted");
+            currentElement.classList.remove("__dk-highlighted");
             currentElement = null;
         }
 
         document.getElementById(STYLE_ID)?.remove();
         document.getElementById(BANNER_ID)?.remove();
-        delete window.__ctaDomKillerDestroy;
+        delete window.__DomKillerDestroy;
     }
 
-    window.__ctaDomKillerDestroy = destroy;
+    window.__DomKillerDestroy = destroy;
 
     // ─── Attach ───────────────────────────────────────────────────────────────
 

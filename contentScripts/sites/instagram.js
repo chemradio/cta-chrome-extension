@@ -110,12 +110,12 @@
         }
     };
 
-    window.__ctaAutoCapturePending = (async () => {
+    window.__AutoCapturePending = (async () => {
         try {
-            if (window.__ctaSiteOptions?.detectOnly) {
+            if (window.__SiteOptions?.detectOnly) {
                 const pageType = getPageType();
                 console.log(
-                    `[CTA Auto/instagram] detect: page=${pageType} via=${detectorHit ?? "none"}`,
+                    `[Auto/instagram] detect: page=${pageType} via=${detectorHit ?? "none"}`,
                 );
                 return { mode: "detect", pageType };
             }
@@ -123,31 +123,31 @@
             const obscuring = removeObscuring();
             const pageType = getPageType();
             console.log(
-                `[CTA Auto/instagram] page=${pageType} via=${detectorHit ?? "none"}`,
+                `[Auto/instagram] page=${pageType} via=${detectorHit ?? "none"}`,
             );
-            console.log(`[CTA Auto/instagram] cleanup: OBSCURING=${obscuring}`);
+            console.log(`[Auto/instagram] cleanup: OBSCURING=${obscuring}`);
 
             if (pageType === "post") {
                 const el = getPostElement();
                 console.log(
-                    `[CTA Auto/instagram] target=${el ? `post via=${targetSelector}` : "MISS"}`,
+                    `[Auto/instagram] target=${el ? `post via=${targetSelector}` : "MISS"}`,
                 );
                 console.log(el);
                 if (el)
                     return {
                         mode: "element",
-                        xpath: window.__ctaBuildXPath(el),
+                        xpath: window.__BuildXPath(el),
                     };
             }
             if (pageType === "story") {
                 const el = getStoryElement();
                 console.log(
-                    `[CTA Auto/instagram] target=${el ? `story via=${targetSelector}` : "MISS"}`,
+                    `[Auto/instagram] target=${el ? `story via=${targetSelector}` : "MISS"}`,
                 );
                 if (el)
                     return {
                         mode: "element",
-                        xpath: window.__ctaBuildXPath(el),
+                        xpath: window.__BuildXPath(el),
                     };
             }
             if (pageType === "profile") {
@@ -156,7 +156,7 @@
             }
             return { mode: "page" };
         } catch (e) {
-            console.warn("[CTA Auto/instagram]", e);
+            console.warn("[Auto/instagram]", e);
             return { mode: "page" };
         }
     })();

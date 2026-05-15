@@ -2,8 +2,8 @@
     // Tear down any previous instance from an earlier injection on this page.
     // Without this, a leaked observer can fire MUTATIONS_FINISHED later and
     // resolve the *next* capture's wait prematurely.
-    if (window.__ctaMutationCleanup) {
-        try { window.__ctaMutationCleanup(); } catch {}
+    if (window.__MutationCleanup) {
+        try { window.__MutationCleanup(); } catch {}
     }
 
     const DEBOUNCE_MS = 800;
@@ -18,8 +18,8 @@
         clearTimeout(debounceTimer);
         clearTimeout(maxWaitTimer);
         observer.disconnect();
-        if (window.__ctaMutationCleanup === cleanup) {
-            delete window.__ctaMutationCleanup;
+        if (window.__MutationCleanup === cleanup) {
+            delete window.__MutationCleanup;
         }
     }
 
@@ -43,5 +43,5 @@
     });
 
     maxWaitTimer = setTimeout(done, MAX_WAIT_MS);
-    window.__ctaMutationCleanup = cleanup;
+    window.__MutationCleanup = cleanup;
 })();

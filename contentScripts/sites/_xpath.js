@@ -2,13 +2,13 @@
 // contentScripts/elementHighlighter.js so the XPath produced here resolves to
 // the same node via the same XPath evaluator used by element capture.
 //
-// Exposed as window.__ctaBuildXPath in the isolated world. Site modules read it
+// Exposed as window.__BuildXPath in the isolated world. Site modules read it
 // after this file is injected first by the orchestrator.
 
 (() => {
-    if (window.__ctaBuildXPath) return;
+    if (window.__BuildXPath) return;
 
-    window.__ctaBuildXPath = function buildXPath(element) {
+    window.__BuildXPath = function buildXPath(element) {
         if (!element) return null;
         if (element.id) {
             const id = element.id;

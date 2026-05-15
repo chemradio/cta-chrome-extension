@@ -8,7 +8,7 @@ import {
     waitForMutationSettle,
 } from "../support/mutationObserver.js";
 
-const SCROLLBAR_STYLE_ID = "__cta-no-scroll";
+const SCROLLBAR_STYLE_ID = "__no-scroll";
 
 const hideScrollbars = (tabId) =>
     chrome.scripting.executeScript({

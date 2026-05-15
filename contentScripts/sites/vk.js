@@ -64,28 +64,28 @@
         return null;
     };
 
-    window.__ctaAutoCapturePending = (async () => {
+    window.__AutoCapturePending = (async () => {
         try {
             const pageType = getPageType();
-            if (window.__ctaSiteOptions?.detectOnly) {
+            if (window.__SiteOptions?.detectOnly) {
                 return { mode: "detect", pageType };
             }
-            console.log(`[CTA Auto/vk] page=${pageType} via=${detectorHit ?? "none"}`);
+            console.log(`[Auto/vk] page=${pageType} via=${detectorHit ?? "none"}`);
 
             const banners = removeBanners();
-            console.log(`[CTA Auto/vk] cleanup: BANNERS=${banners}`);
+            console.log(`[Auto/vk] cleanup: BANNERS=${banners}`);
 
             if (pageType === "post") {
                 const el = getPostElement();
-                console.log(`[CTA Auto/vk] target=${el ? `post via=${targetSelector}` : "MISS"}`);
-                if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
+                console.log(`[Auto/vk] target=${el ? `post via=${targetSelector}` : "MISS"}`);
+                if (el) return { mode: "element", xpath: window.__BuildXPath(el) };
             }
             if (pageType === "profile") {
                 return { mode: "page" };
             }
             return { mode: "page" };
         } catch (e) {
-            console.warn("[CTA Auto/vk]", e);
+            console.warn("[Auto/vk]", e);
             return { mode: "page" };
         }
     })();

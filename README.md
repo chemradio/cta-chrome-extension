@@ -1,4 +1,4 @@
-# Screenshot Helper Extension for Chrome
+# Sharpshooter Extension for Chrome
 
 Chrome extension for capturing high-resolution, clean screenshots of web pages and individual elements. Built for MotionGFX / asset creation.
 

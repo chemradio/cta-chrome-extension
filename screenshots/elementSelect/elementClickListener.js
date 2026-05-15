@@ -256,7 +256,7 @@ export async function captureElement({
         if (elementExceedsViewport(rect)) {
             const expanded = expandedMetricsToFit(deviceMetrics, rect);
             console.log(
-                `[CTA] element ${rect.width}×${rect.height} exceeds viewport ` +
+                `element ${rect.width}×${rect.height} exceeds viewport ` +
                     `${rect.viewportWidth}×${rect.viewportHeight} — ` +
                     `expanding emulation to ${expanded.width}×${expanded.height}`
             );
@@ -267,7 +267,7 @@ export async function captureElement({
 
             if (elementExceedsViewport(rect)) {
                 console.warn(
-                    "[CTA] element still exceeds viewport after expansion; " +
+                    "element still exceeds viewport after expansion; " +
                         "capture will be clipped"
                 );
             }
@@ -280,7 +280,7 @@ export async function captureElement({
         const fullshot = await takeScreenshotClip(tabId);
 
         console.log(
-            `[CTA] element ${rect.width}×${rect.height} ` +
+            `element ${rect.width}×${rect.height} ` +
                 `@ (${rect.left},${rect.top}); ` +
                 `crop ${cw}×${ch} @ (${cx},${cy}) dpr=${dpr}`
         );
@@ -317,7 +317,7 @@ export const addElementClickedListener = () => {
         })
             .then(() => finish({ ok: true }))
             .catch((error) => {
-                console.error("[CTA] Element capture failed:", error);
+                console.error("Element capture failed:", error);
                 finish({ ok: false, error: error?.message ?? String(error) });
             });
 

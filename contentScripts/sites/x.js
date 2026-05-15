@@ -64,29 +64,29 @@
         return null;
     };
 
-    window.__ctaAutoCapturePending = (async () => {
+    window.__AutoCapturePending = (async () => {
         try {
             const pageType = getPageType();
-            if (window.__ctaSiteOptions?.detectOnly) {
+            if (window.__SiteOptions?.detectOnly) {
                 return { mode: "detect", pageType };
             }
-            console.log(`[CTA Auto/x] page=${pageType} via=${detectorHit ?? "none"}`);
+            console.log(`[Auto/x] page=${pageType} via=${detectorHit ?? "none"}`);
 
             const personal = removePersonal();
-            console.log(`[CTA Auto/x] cleanup: PERSONAL=${personal}`);
+            console.log(`[Auto/x] cleanup: PERSONAL=${personal}`);
 
             if (pageType === "post") {
                 window.scrollTo(0, 0);
                 const el = getPostElement();
-                console.log(`[CTA Auto/x] target=${el ? `post via=${targetSelector}` : "MISS"}`);
-                if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
+                console.log(`[Auto/x] target=${el ? `post via=${targetSelector}` : "MISS"}`);
+                if (el) return { mode: "element", xpath: window.__BuildXPath(el) };
             }
             if (pageType === "profile") {
                 return { mode: "page" };
             }
             return { mode: "page" };
         } catch (e) {
-            console.warn("[CTA Auto/x]", e);
+            console.warn("[Auto/x]", e);
             return { mode: "page" };
         }
     })();

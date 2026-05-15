@@ -19,7 +19,7 @@ export async function refreshFilters() {
     };
     await saveFilters(payload);
     console.log(
-        `[CTA] AdRemover filters refreshed: ${ruleCount} rules ` +
+        `AdRemover filters refreshed: ${ruleCount} rules ` +
             `(${skipped} extended-syntax rules skipped)`
     );
     return payload;

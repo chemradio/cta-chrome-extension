@@ -1,8 +1,8 @@
 {
-    "extName":            { "message": "CTA Helper" },
+    "extName":            { "message": "Sharpshooter" },
     "extDescription":     { "message": "High-resolution page and element screenshots." },
 
-    "popupTitle":         { "message": "Screenshot Helper" },
+    "popupTitle":         { "message": "Sharpshooter" },
     "helpBtnTitle":       { "message": "Help" },
     "helpBtnTitleClose":  { "message": "Close help" },
     "modeToggleTitle":    { "message": "Toggle expert mode" },

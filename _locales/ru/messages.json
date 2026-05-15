@@ -1,10 +1,10 @@
 {
-    "extName": { "message": "CTA Helper" },
+    "extName": { "message": "Sharpshooter" },
     "extDescription": {
         "message": "Скриншоты страниц и элементов в высоком разрешении."
     },
 
-    "popupTitle": { "message": "Помощник скриншотов" },
+    "popupTitle": { "message": "Sharpshooter" },
     "helpBtnTitle": { "message": "Справка" },
     "helpBtnTitleClose": { "message": "Закрыть справку" },
     "modeToggleTitle": { "message": "Переключить экспертный режим" },

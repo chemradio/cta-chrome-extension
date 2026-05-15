@@ -2,8 +2,8 @@
 // results[0].result — we use that to surface a removed-node count back to
 // the popup status bar.
 (async () => {
-    if (window.__ctaAdRemoverRunning) return { removed: 0, selectors: 0, skipped: true };
-    window.__ctaAdRemoverRunning = true;
+    if (window.__AdRemoverRunning) return { removed: 0, selectors: 0, skipped: true };
+    window.__AdRemoverRunning = true;
 
     try {
         const {
@@ -21,7 +21,7 @@
         ]);
         if (!adFilters) {
             console.warn(
-                "[CTA] AdRemover: no EasyList in storage yet. Background " +
+                "AdRemover: no EasyList in storage yet. Background " +
                     "should have hydrated it — reopen the popup and retry."
             );
         }
@@ -52,7 +52,7 @@
 
         const removed = applySelectors(selectors);
         console.log(
-            `[CTA] AdRemover: removed ${removed} node(s) using ` +
+            `AdRemover: removed ${removed} node(s) using ` +
                 `${selectors.length} selectors ` +
                 `(easylist:${matchedAd.length} bundled:${matchedBundled.length} ` +
                 `user:${matchedUser.length} user-global:${userGlobal.length})`
@@ -68,7 +68,7 @@
             },
         };
     } finally {
-        delete window.__ctaAdRemoverRunning;
+        delete window.__AdRemoverRunning;
     }
 
     function domainMatches(host, ruleDomain) {
