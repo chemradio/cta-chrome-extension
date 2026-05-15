@@ -6,21 +6,26 @@
 // to a full-page capture of the centered main column.
 
 (() => {
+    // Detection order: STORY -> POST -> PROFILE. Stories first because
+    // x5yr21d is the most distinctive marker; posts second because
+    // xdt5ytf / xyzq4qe rule out profile pages; profile last as fallback.
+    const STORY_DETECTORS = [".xoqlrxr.xtijo5x", ".x1ned7t2.x78zum5"];
     const POST_DETECTORS = [
-        "article",
-        ".x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3",
-    ];
-    const STORY_DETECTORS = [
-        ".xyzq4qe .xgqcy7u .x1lq5wgf .x5yr21d .x6ikm8r .x10wlt62 .x1n2onr6 .x87ps6o .xh8yej3 .x1ja2u2z",
-        '[aria-label="Pause"]',
-        '[aria-label="Play"]',
+        ".xdt5ytf.x11t971q.xat24cr",
+        ".x1yvgwvq.x1ixjvfu",
+        ".xyzq4qe.x1tjbqro",
     ];
     const PROFILE_DETECTORS = [
+        "header.x1yztbdb.x1qe1wrf",
+        "section.xlo4toe.x2wt2w",
+        "section.x98rzlu.xeuugli",
         '[role="tablist"]',
-        '[aria-label="Link icon"]',
     ];
 
-    const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+    const POST_TARGET_SELECTORS = [".xdt5ytf.x11t971q.xat24cr", ".x1yvgwvq.x1ixjvfu"];
+    const STORY_TARGET_SELECTORS = [".x78zum5.xl56j7k", ".x5yr21d"];
+    const COMMENT_AS_SELECTOR = ".x1ys307a.xyqm7xq";
+
     const firstMatch = (selectors) => {
         for (const s of selectors) {
             try {
@@ -34,20 +39,29 @@
     let targetSelector = null;
     const getPageType = () => {
         let s;
-        if ((s = firstMatch(POST_DETECTORS)))    { detectorHit = s; return "post"; }
-        if ((s = firstMatch(STORY_DETECTORS)))   { detectorHit = s; return "story"; }
-        if ((s = firstMatch(PROFILE_DETECTORS))) { detectorHit = s; return "profile"; }
+        if ((s = firstMatch(STORY_DETECTORS))) {
+            detectorHit = s;
+            return "story";
+        }
+        if ((s = firstMatch(POST_DETECTORS))) {
+            detectorHit = s;
+            return "post";
+        }
+        if ((s = firstMatch(PROFILE_DETECTORS))) {
+            detectorHit = s;
+            return "profile";
+        }
         return "unknown";
     };
 
     const removeObscuring = () => {
-        const matches = document.querySelectorAll('[class="x1n2onr6 xzkaem6"]');
-        matches.forEach((el) => el.remove());
-        return matches.length;
+        // const matches = document.querySelectorAll('[class="x1n2onr6 xzkaem6"]');
+        // matches.forEach((el) => el.remove());
+        // return matches.length;
     };
 
     const getPostElement = () => {
-        for (const selector of POST_DETECTORS) {
+        for (const selector of POST_TARGET_SELECTORS) {
             try {
                 const post = document.querySelector(selector);
                 if (post) {
@@ -56,10 +70,7 @@
                     if (post.firstElementChild) {
                         post.firstElementChild.style.border = "0px";
                     }
-                    // Strip the "Comment as" composer that hangs off the post
-                    post.querySelector(
-                        'section[class*="x1roi4f4"], section[class*="x5ur3kl"]'
-                    )?.remove();
+                    post.querySelector(COMMENT_AS_SELECTOR)?.remove();
                     return post;
                 }
             } catch {
@@ -69,21 +80,15 @@
         return null;
     };
 
-    const getStoryElement = async () => {
-        const viewBtn = Array.from(
-            document.querySelectorAll('div[role="button"]')
-        ).find((d) => d.innerHTML.trim() === "View story");
-        viewBtn?.click();
-        await delay(1000);
-        document.querySelector('[aria-label="Pause"]')?.parentElement?.click();
-
-        const storySelectors = [
-            ".x5yr21d .x1n2onr6 .xh8yej3",
-            '[referrerpolicy="origin-when-cross-origin"]',
-        ];
-        for (const selector of storySelectors) {
-            const el = document.querySelector(selector);
-            if (el) { targetSelector = selector; return el; }
+    const getStoryElement = () => {
+        for (const selector of STORY_TARGET_SELECTORS) {
+            try {
+                const el = document.querySelector(selector);
+                if (el) {
+                    targetSelector = selector;
+                    return el;
+                }
+            } catch {}
         }
         return null;
     };
@@ -109,25 +114,41 @@
         try {
             if (window.__ctaSiteOptions?.detectOnly) {
                 const pageType = getPageType();
+                console.log(
+                    `[CTA Auto/instagram] detect: page=${pageType} via=${detectorHit ?? "none"}`,
+                );
                 return { mode: "detect", pageType };
             }
             document.body.style.fontFamily = "'Roboto', sans-serif";
             const obscuring = removeObscuring();
             const pageType = getPageType();
             console.log(
-                `[CTA Auto/instagram] page=${pageType} via=${detectorHit ?? "none"}`
+                `[CTA Auto/instagram] page=${pageType} via=${detectorHit ?? "none"}`,
             );
             console.log(`[CTA Auto/instagram] cleanup: OBSCURING=${obscuring}`);
 
             if (pageType === "post") {
                 const el = getPostElement();
-                console.log(`[CTA Auto/instagram] target=${el ? `post via=${targetSelector}` : "MISS"}`);
-                if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
+                console.log(
+                    `[CTA Auto/instagram] target=${el ? `post via=${targetSelector}` : "MISS"}`,
+                );
+                console.log(el);
+                if (el)
+                    return {
+                        mode: "element",
+                        xpath: window.__ctaBuildXPath(el),
+                    };
             }
             if (pageType === "story") {
-                const el = await getStoryElement();
-                console.log(`[CTA Auto/instagram] target=${el ? `story via=${targetSelector}` : "MISS"}`);
-                if (el) return { mode: "element", xpath: window.__ctaBuildXPath(el) };
+                const el = getStoryElement();
+                console.log(
+                    `[CTA Auto/instagram] target=${el ? `story via=${targetSelector}` : "MISS"}`,
+                );
+                if (el)
+                    return {
+                        mode: "element",
+                        xpath: window.__ctaBuildXPath(el),
+                    };
             }
             if (pageType === "profile") {
                 prepareProfile();
