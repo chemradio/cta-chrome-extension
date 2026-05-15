@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Screenshot Helper</title>
+        <title data-i18n="popupTitle">Screenshot Helper</title>
         <link rel="stylesheet" href="popup.css" />
         <link
             rel="stylesheet"
@@ -18,6 +18,7 @@
                     id="help-toggle"
                     class="help-toggle"
                     title="Help"
+                    data-i18n-title="helpBtnTitle"
                     aria-label="Help"
                 >
                     ?
@@ -26,12 +27,16 @@
                     class="mode-toggle"
                     for="mode-toggle-input"
                     title="Toggle expert mode"
+                    data-i18n-title="modeToggleTitle"
                 >
                     <input type="checkbox" id="mode-toggle-input" />
                     <span class="mode-toggle-track">
                         <span class="mode-toggle-thumb"></span>
                     </span>
-                    <span class="mode-toggle-label" id="mode-toggle-label"
+                    <span
+                        class="mode-toggle-label"
+                        id="mode-toggle-label"
+                        data-i18n="modeNormal"
                         >NORMAL</span
                     >
                 </label>
@@ -39,7 +44,7 @@
 
             <div id="capture-overlay" class="capture-overlay">
                 <div class="capture-ring"></div>
-                <div id="capture-label" class="capture-label">Capturing…</div>
+                <div id="capture-label" class="capture-label" data-i18n="ovCapturing">Capturing…</div>
                 <div id="capture-hint" class="capture-hint"></div>
             </div>
 
@@ -75,9 +80,9 @@
                                 <path d="M21 9v2" />
                                 <path d="M3 14v1" />
                             </svg>
-                            <span id="capture-site-label">Capture this post</span>
+                            <span id="capture-site-label" data-i18n="promptPost">Capture this post</span>
                         </button>
-                        <div class="site-prompt-hint" id="capture-site-hint">
+                        <div class="site-prompt-hint" id="capture-site-hint" data-i18n="promptDetectedHere">
                             Detected on this page
                         </div>
                     </section>
@@ -86,7 +91,7 @@
 
                     <!-- Quality multiplier -->
                     <section>
-                        <div class="section-label">Quality multiplier</div>
+                        <div class="section-label" data-i18n="qualityMultiplier">Quality multiplier</div>
                         <div class="radio-group">
                             <input
                                 type="radio"
@@ -142,7 +147,7 @@
                                     d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
                                 />
                             </svg>
-                            <span>Auto Capture</span>
+                            <span data-i18n="autoCapture">Auto Capture</span>
                         </button>
                     </section>
 
@@ -174,9 +179,9 @@
                                 <line x1="8" x2="16" y1="21" y2="21" />
                                 <line x1="12" x2="12" y1="17" y2="21" />
                             </svg>
-                            <span>Page Capture</span>
+                            <span data-i18n="pageCapture">Page Capture</span>
                         </button>
-                        <div class="section-label">Resolution</div>
+                        <div class="section-label" data-i18n="resolution">Resolution</div>
                         <div class="radio-group" id="layout-group">
                             <input
                                 type="radio"
@@ -185,7 +190,7 @@
                                 value="user"
                                 checked
                             />
-                            <label for="user">User</label>
+                            <label for="user" data-i18n="presetUser">User</label>
 
                             <input
                                 type="radio"
@@ -193,7 +198,7 @@
                                 name="layout"
                                 value="fullpage"
                             />
-                            <label for="fullpage">Full Page</label>
+                            <label for="fullpage" data-i18n="presetFullPage">Full Page</label>
 
                             <input
                                 type="radio"
@@ -201,7 +206,7 @@
                                 name="layout"
                                 value="vertical"
                             />
-                            <label for="vertical">Vertical</label>
+                            <label for="vertical" data-i18n="presetVertical">Vertical</label>
 
                             <input
                                 type="radio"
@@ -225,7 +230,10 @@
                                 name="layout"
                                 value="custom"
                             />
-                            <label for="custom" class="custom-label"
+                            <label
+                                for="custom"
+                                class="custom-label"
+                                data-i18n="presetCustom"
                                 >Custom</label
                             >
                         </div>
@@ -234,6 +242,7 @@
                                 type="number"
                                 id="width"
                                 placeholder="Width"
+                                data-i18n-ph="phWidth"
                                 min="300"
                                 max="16384"
                                 value="1920"
@@ -243,6 +252,7 @@
                                 type="number"
                                 id="height"
                                 placeholder="Height"
+                                data-i18n-ph="phHeight"
                                 min="300"
                                 max="16384"
                                 value="7000"
@@ -279,7 +289,7 @@
                                 <path d="M21 9v2" />
                                 <path d="M3 14v1" />
                             </svg>
-                            <span>Capture Element</span>
+                            <span data-i18n="captureElement">Capture Element</span>
                         </button>
                     </section>
 
@@ -287,15 +297,16 @@
 
                     <!-- Helpers -->
                     <section>
-                        <div class="section-label">Helpers</div>
+                        <div class="section-label" data-i18n="helpers">Helpers</div>
                         <div class="helpers-row">
                             <button
                                 id="dom-killer"
                                 class="btn-helper btn-helper--danger"
+                                data-i18n="removeElements"
                             >
                                 Remove Elements
                             </button>
-                            <button id="manual-cleanup" class="btn-helper">
+                            <button id="manual-cleanup" class="btn-helper" data-i18n="cleanup">
                                 Cleanup
                             </button>
                         </div>
@@ -304,14 +315,14 @@
 
                 <div id="view-expert" hidden>
                     <section>
-                        <div class="expert-header">Expert Mode</div>
+                        <div class="expert-header" data-i18n="expertMode">Expert Mode</div>
                     </section>
 
                     <div class="divider"></div>
 
                     <section>
                         <div id="filter-manager" class="filter-manager">
-                            <div class="section-label">Add filter</div>
+                            <div class="section-label" data-i18n="addFilter">Add filter</div>
                             <div class="filter-scope radio-group">
                                 <input
                                     type="radio"
@@ -320,7 +331,7 @@
                                     value="host"
                                     checked
                                 />
-                                <label for="scope-host" id="scope-host-label">
+                                <label for="scope-host" id="scope-host-label" data-i18n="scopeHost">
                                     This host
                                 </label>
                                 <input
@@ -329,23 +340,24 @@
                                     name="filter-scope"
                                     value="global"
                                 />
-                                <label for="scope-global">All hosts</label>
+                                <label for="scope-global" data-i18n="scopeGlobal">All hosts</label>
                             </div>
                             <div class="filter-add-row">
                                 <input
                                     type="text"
                                     id="filter-input"
                                     placeholder='CSS selector, or paste class="…" / <div …>'
+                                    data-i18n-ph="phFilterInput"
                                     spellcheck="false"
                                     autocomplete="off"
                                 />
-                                <button id="filter-add" class="btn-helper">
+                                <button id="filter-add" class="btn-helper" data-i18n="btnAdd">
                                     Add
                                 </button>
                             </div>
                             <label class="filter-parent" for="filter-parent">
                                 <input type="checkbox" id="filter-parent" />
-                                <span>Target parent element</span>
+                                <span data-i18n="targetParent">Target parent element</span>
                             </label>
                             <div
                                 id="filter-preview"
@@ -355,7 +367,7 @@
 
                             <div class="filter-list-block">
                                 <div class="section-label">
-                                    For
+                                    <span data-i18n="filterListFor">For</span>
                                     <span id="filter-host" class="filter-host"
                                         >…</span
                                     >
@@ -364,7 +376,7 @@
                             </div>
 
                             <div class="filter-list-block">
-                                <div class="section-label">All hosts</div>
+                                <div class="section-label" data-i18n="scopeGlobal">All hosts</div>
                                 <ul
                                     id="filter-list-global"
                                     class="filter-list"
@@ -379,22 +391,25 @@
                         <button
                             id="export-filters"
                             class="btn-helper btn-helper--expert"
+                            data-i18n="exportFilters"
                         >
                             Export Filters
                         </button>
                         <label class="filter-parent" for="disable-bundled">
                             <input type="checkbox" id="disable-bundled" />
-                            <span>Disable bundled filters</span>
+                            <span data-i18n="disableBundled">Disable bundled filters</span>
                         </label>
                         <button
                             id="clear-domain-filters"
                             class="btn-helper btn-helper--expert"
+                            data-i18n="clearDomainFilters"
                         >
                             Clear Domain Filters
                         </button>
                         <button
                             id="clear-global-filters"
                             class="btn-helper btn-helper--expert"
+                            data-i18n="clearGlobalFilters"
                         >
                             Clear Global Filters
                         </button>
@@ -403,12 +418,12 @@
                     <div class="divider"></div>
 
                     <section>
-                        <div class="section-label">Output</div>
+                        <div class="section-label" data-i18n="output">Output</div>
                         <label class="filter-parent" for="reencode-opaque">
                             <input type="checkbox" id="reencode-opaque" />
-                            <span>Re-encode PNG opaque</span>
+                            <span data-i18n="reencodeOpaque">Re-encode PNG opaque</span>
                         </label>
-                        <p class="expert-note">
+                        <p class="expert-note" data-i18n="expertNote">
                             Flattens captures onto a white background and strips
                             the alpha channel and colour-profile chunks. Fixes
                             Adobe ScriptUI / Direct2D drawbot panels that reject
@@ -420,199 +435,29 @@
 
             <div id="view-help" class="help-view" hidden>
                 <div id="help-content-normal" class="help-content">
-                    <h3 class="help-title">How capture works</h3>
-
-                    <div class="help-block">
-                        <div class="help-heading">Capture this post / story</div>
-                        <p>
-                            When you open the popup on Facebook, Instagram,
-                            Telegram (t.me), X / Twitter or VK, the extension
-                            checks whether the page contains a post or a story.
-                            If it does, a "Capture this post" (or "story")
-                            button appears at the top. Click it to remove
-                            comments, sidebars and other clutter around the
-                            target and capture just that element.
-                        </p>
-                    </div>
-
-                    <div class="help-block">
-                        <div class="help-heading">Auto Capture</div>
-                        <p>
-                            One-click cleanup + full-page capture: runs the
-                            ad-remover and per-site cleanup, then captures the
-                            whole page at the chosen scale. Use this when you
-                            want the whole page, not a single post.
-                        </p>
-                    </div>
-
-                    <div class="help-block">
-                        <div class="help-heading">Page Capture</div>
-                        <p>
-                            Captures the whole page at a chosen resolution. Pick
-                            a preset:
-                        </p>
-                        <ul>
-                            <li>
-                                <b>User</b> — the current tab's viewport size
-                                (default). Combined with the 2× quality
-                                multiplier, gives you a sharp shot at the
-                                exact size you see in the browser.
-                            </li>
-                            <li>
-                                <b>Full Page</b> — viewport width, full
-                                document height (measured live).
-                            </li>
-                            <li>
-                                <b>Vertical</b> — viewport width × (width × 3.5),
-                                good for long social posts.
-                            </li>
-                            <li><b>FullHD</b> — 1920 × 1080.</li>
-                            <li><b>4K</b> — 3840 × 2160.</li>
-                            <li><b>Custom</b> — your own width × height.</li>
-                        </ul>
-                        <p>
-                            The page is emulated at this resolution before
-                            capture, so layouts adapt as if the window were that
-                            size.
-                        </p>
-                    </div>
-
-                    <div class="help-block">
-                        <div class="help-heading">Capture Element</div>
-                        <p>
-                            Click the button, then hover any element on the
-                            page. A cyan glow shows what will be captured. Use
-                            the <b>scroll wheel</b> to change depth (up =
-                            parent, down = first child). Click to commit.
-                        </p>
-                    </div>
-
-                    <div class="help-block">
-                        <div class="help-heading">Quality multiplier</div>
-                        <p>
-                            1× / 2× / 3× / 4× — scales pixel density. 2× is the
-                            default and works well for most uses. 3×–4× produces
-                            large but very sharp images suitable for print or
-                            motion graphics.
-                        </p>
-                    </div>
-
-                    <div class="help-block">
-                        <div class="help-heading">Helpers</div>
-                        <p>
-                            <b>Cleanup</b> — runs the ad-remover and per-site
-                            cleanup once on the current page, without taking a
-                            screenshot. Useful before Page Capture if Auto isn't
-                            the right mode.
-                        </p>
-                        <p>
-                            <b>Remove Elements</b> — manual click-to-remove
-                            mode. Hover targets, scroll to change depth, click
-                            to delete. ESC to stop. Removed selectors are saved
-                            as your personal filters (see Expert mode for
-                            managing them).
-                        </p>
-                    </div>
+                    <h3 class="help-title" data-i18n="helpTitleNormal">How capture works</h3>
+                    <div class="help-disclaimer" data-i18n-html="helpDisclaimer"></div>
+                    <div class="help-block" data-i18n-html="helpCaptureSite"></div>
+                    <div class="help-block" data-i18n-html="helpAutoCapture"></div>
+                    <div class="help-block" data-i18n-html="helpPageCapture"></div>
+                    <div class="help-block" data-i18n-html="helpCaptureElement"></div>
+                    <div class="help-block" data-i18n-html="helpQuality"></div>
+                    <div class="help-block" data-i18n-html="helpHelpers"></div>
                 </div>
 
                 <div id="help-content-expert" class="help-content" hidden>
-                    <h3 class="help-title">How filters work</h3>
-
-                    <div class="help-block">
-                        <div class="help-heading">Three filter tiers</div>
-                        <p>
-                            When you run Cleanup or Auto Capture, three sources
-                            of filters are merged:
-                        </p>
-                        <ul>
-                            <li>
-                                <b>EasyList</b> — the standard adblock cosmetic
-                                filter list. Refreshed from easylist.to
-                                automatically (weekly).
-                            </li>
-                            <li>
-                                <b>Bundled filters</b> — hand-curated selectors
-                                shipped with the extension for sites the dev has
-                                tuned. Updated when the extension updates.
-                            </li>
-                            <li>
-                                <b>User filters</b> — selectors
-                                <i>you</i> collect, either via "Remove Elements"
-                                (which auto-saves each click) or by typing them
-                                in here.
-                            </li>
-                        </ul>
-                        <p>
-                            Duplicates between tiers collapse automatically, so
-                            promoting a user filter to the bundled list is
-                            non-disruptive.
-                        </p>
-                    </div>
-
-                    <div class="help-block">
-                        <div class="help-heading">Adding filters manually</div>
-                        <p>
-                            Paste a CSS selector into the input, or paste a
-                            fragment like <code>class="foo bar"</code> or
-                            <code>&lt;div data-testid="ad"&gt;</code> — it gets
-                            converted to a valid selector automatically. Preview
-                            shows the normalized form before adding.
-                        </p>
-                        <ul>
-                            <li>
-                                <b>This host</b> — applies only on the current
-                                domain (and subdomains).
-                            </li>
-                            <li>
-                                <b>All hosts</b> — applies everywhere. Use
-                                sparingly.
-                            </li>
-                            <li>
-                                <b>Target parent element</b> — wraps the
-                                selector in <code>*:has(&gt; …)</code> so the
-                                parent gets removed instead of the matched
-                                element. Good for "remove the card that contains
-                                this badge".
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="help-block">
-                        <div class="help-heading">
-                            Managing your filter list
-                        </div>
-                        <p>
-                            Filters for the current host are listed under the
-                            host name; global filters under "All hosts". Click
-                            <b>×</b> on a row to remove that one. The
-                            <b>Clear Domain Filters</b> and
-                            <b>Clear Global Filters</b> buttons wipe entire
-                            tiers (EasyList and bundled are untouched).
-                        </p>
-                        <p>
-                            <b>Disable bundled filters</b> turns off the
-                            dev-curated tier — useful for debugging which tier
-                            is causing unwanted removals.
-                        </p>
-                    </div>
-
-                    <div class="help-block">
-                        <div class="help-heading">Exporting filters</div>
-                        <p>
-                            <b>Export Filters</b> downloads your collected user
-                            filters as a JSON file (shape:
-                            <code>{global, domains}</code>). Email this to the
-                            extension dev — selectors worth sharing get merged
-                            into the bundled list and propagated to everyone in
-                            the next update.
-                        </p>
-                    </div>
+                    <h3 class="help-title" data-i18n="helpTitleExpert">How filters work</h3>
+                    <div class="help-block" data-i18n-html="helpTiers"></div>
+                    <div class="help-block" data-i18n-html="helpAddingFilters"></div>
+                    <div class="help-block" data-i18n-html="helpManaging"></div>
+                    <div class="help-block" data-i18n-html="helpExporting"></div>
                 </div>
             </div>
 
             <div id="status" class="status"></div>
         </div>
 
+        <script src="i18n.js"></script>
         <script src="popup.js"></script>
     </body>
 </html>

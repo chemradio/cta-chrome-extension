@@ -6,6 +6,12 @@ const popupEl        = document.querySelector(".popup");
 const captureLabelEl = document.getElementById("capture-label");
 const captureHintEl  = document.getElementById("capture-hint");
 
+// Localized-string helper. Pulls from _locales/<lang>/messages.json via the
+// browser UI language; positional substitutions ($1…$9) map to extra args.
+// Falls back to the key itself if a message is missing.
+const t = (key, ...subs) =>
+    chrome.i18n.getMessage(key, subs.length ? subs.map(String) : undefined) || key;
+
 // "User" / "Full Page" / "Vertical" presets size to the active tab's viewport
 // (CSS pixels at the user's current zoom — what they actually see). The
 // background fetches it from the tab on popup open; until that resolves, fall
@@ -79,11 +85,11 @@ function updateResolutionInputs() {
         heightInput.disabled = true;
         widthInput.value     = viewportWidth;
         heightInput.value    = "";
-        setStatus("Measuring page height…");
+        setStatus(t("stMeasuringHeight"));
         chrome.runtime.sendMessage({ action: "getPageHeight" }, (response) => {
             if (chrome.runtime.lastError || !response || response.ok === false) {
                 heightInput.value = 16000;
-                setStatus("Could not measure page height", "error", 3000);
+                setStatus(t("stMeasureFailed"), "error", 3000);
                 return;
             }
             heightInput.value = Math.min(response.pageHeight ?? 16000, 16000);
@@ -139,7 +145,7 @@ const sendMessage = (message) =>
                 return reject(new Error(chrome.runtime.lastError.message));
             }
             if (response && response.ok === false) {
-                return reject(new Error(response.error || "Request failed"));
+                return reject(new Error(response.error || t("stRequestFailed")));
             }
             resolve(response);
         });
@@ -148,14 +154,14 @@ const sendMessage = (message) =>
 // ─── Button handlers ──────────────────────────────────────────────────────────
 
 document.getElementById("capture-page").addEventListener("click", () => {
-    showCapturing("Capturing page…");
+    showCapturing(t("stCapturingPage"));
     sendMessage({ action: "capturePage", settings: getSettings() })
-        .then(() => { stopCapturing(); setStatus("Done — check Downloads", "ok", 4000); })
-        .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
+        .then(() => { stopCapturing(); setStatus(t("stDone"), "ok", 4000); })
+        .catch((e) => { stopCapturing(); setStatus(e.message ?? t("stError"), "error", 5000); });
 });
 
 document.getElementById("capture-element").addEventListener("click", async () => {
-    showCapturing("Select an element", "Move mouse to highlight\nScroll wheel to change depth");
+    showCapturing(t("ovSelectElement"), t("ovSelectElementHint"));
     try {
         // Await injection so the highlighter is listening before we close the popup.
         // Closing immediately afterward avoids the two-click trap: if the popup is
@@ -165,15 +171,15 @@ document.getElementById("capture-element").addEventListener("click", async () =>
         window.close();
     } catch (e) {
         stopCapturing();
-        setStatus(e.message ?? "Error", "error", 5000);
+        setStatus(e.message ?? t("stError"), "error", 5000);
     }
 });
 
 document.getElementById("capture-auto").addEventListener("click", () => {
-    showCapturing("Auto-capturing…");
+    showCapturing(t("stAutoCapturing"));
     sendMessage({ action: "autoCapture", settings: getSettings() })
-        .then(() => { stopCapturing(); setStatus("Auto: full page — check Downloads", "ok", 4000); })
-        .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
+        .then(() => { stopCapturing(); setStatus(t("stAutoDone"), "ok", 4000); })
+        .catch((e) => { stopCapturing(); setStatus(e.message ?? t("stError"), "error", 5000); });
 });
 
 // ─── Site-detection prompt ────────────────────────────────────────────────────
@@ -193,9 +199,9 @@ const captureSiteHint   = document.getElementById("capture-site-hint");
 // Page-type → button label. Types not listed (profile, unknown) don't get
 // a prompt — those pages should fall through to Auto/Page Capture.
 const PROMPT_LABELS = {
-    post:      "Capture this post",
-    story:     "Capture this story",
-    groupPost: "Capture this post",
+    post:      t("promptPost"),
+    story:     t("promptStory"),
+    groupPost: t("promptPost"),
 };
 
 const SITE_DISPLAY_NAMES = {
@@ -209,7 +215,7 @@ const SITE_DISPLAY_NAMES = {
 function showSitePrompt(module, pageType) {
     captureSiteLabel.textContent = PROMPT_LABELS[pageType];
     captureSiteHint.textContent  =
-        `Detected on ${SITE_DISPLAY_NAMES[module] ?? module}`;
+        t("promptDetectedOn", SITE_DISPLAY_NAMES[module] ?? module);
     sitePromptSection.hidden = false;
     sitePromptDivider.hidden = false;
 }
@@ -223,10 +229,10 @@ sendMessage({ action: "detectSite" })
     .catch(() => { /* detection is best-effort — silent on failure */ });
 
 captureSiteBtn.addEventListener("click", () => {
-    showCapturing("Capturing…");
+    showCapturing(t("ovCapturing"));
     sendMessage({ action: "captureSiteElement", settings: getSettings() })
-        .then(() => { stopCapturing(); setStatus("Done — check Downloads", "ok", 4000); })
-        .catch((e) => { stopCapturing(); setStatus(e.message ?? "Error", "error", 5000); });
+        .then(() => { stopCapturing(); setStatus(t("stDone"), "ok", 4000); })
+        .catch((e) => { stopCapturing(); setStatus(e.message ?? t("stError"), "error", 5000); });
 });
 
 // Element capture result — fires if the popup is still open when capture ends.
@@ -234,20 +240,20 @@ chrome.runtime.onMessage.addListener((msg) => {
     if (msg?.action !== "elementCaptureResult") return false;
     stopCapturing();
     if (msg.ok) {
-        setStatus("Done — check Downloads", "ok", 4000);
+        setStatus(t("stDone"), "ok", 4000);
     } else {
-        setStatus(msg.error || "Element capture failed", "error", 5000);
+        setStatus(msg.error || t("stElementCaptureFailed"), "error", 5000);
     }
     return false;
 });
 
 document.getElementById("manual-cleanup").addEventListener("click", () => {
-    setStatus("Cleaning up…");
+    setStatus(t("stCleaningUp"));
     sendMessage({ action: "manualCleanup" })
         .then((res) => {
             const s = res?.stats;
             if (!s) {
-                setStatus("Cleanup done", "ok", 3000);
+                setStatus(t("stCleanupDone"), "ok", 3000);
                 return;
             }
             const { removed = 0, sources = {} } = s;
@@ -256,13 +262,13 @@ document.getElementById("manual-cleanup").addEventListener("click", () => {
                 `bundled:${sources.bundled ?? 0} ` +
                 `user:${sources.user ?? 0} ` +
                 `user-global:${sources.userGlobal ?? 0}`;
-            setStatus(`Removed ${removed} nodes (${breakdown})`, "ok", 5000);
+            setStatus(t("stRemovedNodes", removed, breakdown), "ok", 5000);
         })
-        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+        .catch((e) => setStatus(e.message ?? t("stError"), "error", 5000));
 });
 
 document.getElementById("dom-killer").addEventListener("click", async () => {
-    showCapturing("Manual removal", "Hover to target · Click to remove\nWheel to change depth · ESC to stop");
+    showCapturing(t("ovManualRemoval"), t("ovManualRemovalHint"));
     try {
         // Same one-click fix as capture-element: close the popup once the
         // content script is listening, so the user's first click on the page
@@ -271,7 +277,7 @@ document.getElementById("dom-killer").addEventListener("click", async () => {
         window.close();
     } catch (e) {
         stopCapturing();
-        setStatus(e.message ?? "Error", "error", 5000);
+        setStatus(e.message ?? t("stError"), "error", 5000);
     }
 });
 
@@ -290,7 +296,7 @@ disableBundledCb.addEventListener("change", () => {
     const disabled = disableBundledCb.checked;
     chrome.storage.local.set({ bundledFiltersDisabled: disabled });
     setStatus(
-        disabled ? "Bundled filters disabled" : "Bundled filters enabled",
+        disabled ? t("stBundledDisabled") : t("stBundledEnabled"),
         "ok",
         2000
     );
@@ -306,7 +312,7 @@ reencodeOpaqueCb.addEventListener("change", () => {
     const enabled = reencodeOpaqueCb.checked;
     chrome.storage.local.set({ reencodeOpaquePng: enabled });
     setStatus(
-        enabled ? "Opaque PNG re-encode on" : "Opaque PNG re-encode off",
+        enabled ? t("stOpaqueOn") : t("stOpaqueOff"),
         "ok",
         2000
     );
@@ -334,7 +340,7 @@ function setMode(expert) {
     viewExpert.hidden = !expert;
     viewNormal.hidden = expert;
     modeToggleInput.checked = expert;
-    modeToggleLabel.textContent = expert ? "EXPERT" : "NORMAL";
+    modeToggleLabel.textContent = expert ? t("modeExpert") : t("modeNormal");
     popupEl.classList.toggle("is-expert", expert);
     helpContentNormal.hidden = expert;
     helpContentExpert.hidden = !expert;
@@ -352,7 +358,7 @@ function setHelp(open) {
     popupEl.classList.toggle("is-helping", open);
     helpView.hidden = !open;
     helpToggleBtn.textContent = open ? "×" : "?";
-    helpToggleBtn.title = open ? "Close help" : "Help";
+    helpToggleBtn.title = open ? t("helpBtnTitleClose") : t("helpBtnTitle");
 }
 
 helpToggleBtn.addEventListener("click", () => {
@@ -362,7 +368,7 @@ helpToggleBtn.addEventListener("click", () => {
 modeToggleInput.addEventListener("change", () => {
     const expert = modeToggleInput.checked;
     setMode(expert);
-    setStatus(expert ? "Expert mode on" : "Expert mode off", "ok", 1500);
+    setStatus(expert ? t("stExpertOn") : t("stExpertOff"), "ok", 1500);
 });
 
 // ─── Manual user-filter management ────────────────────────────────────────────
@@ -450,7 +456,7 @@ function updatePreview() {
 
     if (!valid) {
         filterPreview.hidden = false;
-        filterPreview.textContent = "Invalid CSS selector";
+        filterPreview.textContent = t("invalidPreview");
         return;
     }
     if (differs) {
@@ -479,7 +485,7 @@ function renderListInto(ulEl, selectors, scope) {
         btn.className = "remove";
         btn.type = "button";
         btn.textContent = "×";
-        btn.title = "Remove";
+        btn.title = t("removeTitle");
         btn.addEventListener("click", () => removeFilter(sel, scope));
         li.append(span, btn);
         ulEl.appendChild(li);
@@ -487,7 +493,7 @@ function renderListInto(ulEl, selectors, scope) {
 }
 
 function renderFilterList(host, selectors, globalSelectors) {
-    filterHostEl.textContent = host || "(no host)";
+    filterHostEl.textContent = host || t("noHost");
     renderListInto(filterListEl,     selectors,       "host");
     renderListInto(filterListGlobal, globalSelectors, "global");
 }
@@ -501,7 +507,7 @@ function refreshFilterList() {
                 res?.globalSelectors ?? []
             )
         )
-        .catch((e) => setStatus(e.message ?? "Error", "error", 4000));
+        .catch((e) => setStatus(e.message ?? t("stError"), "error", 4000));
 }
 
 function addFilter() {
@@ -509,7 +515,7 @@ function addFilter() {
     if (!sel) return;
     if (!isValidCssSelector(sel)) {
         filterInput.classList.add("invalid");
-        setStatus("Invalid CSS selector", "error", 3000);
+        setStatus(t("stInvalidSelector"), "error", 3000);
         return;
     }
     filterInput.classList.remove("invalid");
@@ -523,14 +529,14 @@ function addFilter() {
             );
             filterInput.value = "";
             updatePreview();
-            const where = scope === "global" ? "all hosts" : "this host";
+            const where = scope === "global" ? t("scopeAllHosts") : t("scopeThisHost");
             setStatus(
-                res?.added ? `Added to ${where}: ${sel}` : "Already present",
+                res?.added ? t("stAddedTo", where, sel) : t("stAlreadyPresent"),
                 "ok",
                 2500
             );
         })
-        .catch((e) => setStatus(e.message ?? "Error", "error", 4000));
+        .catch((e) => setStatus(e.message ?? t("stError"), "error", 4000));
 }
 
 function removeFilter(sel, scope) {
@@ -541,9 +547,9 @@ function removeFilter(sel, scope) {
                 res?.selectors ?? [],
                 res?.globalSelectors ?? []
             );
-            setStatus(`Removed: ${sel}`, "ok", 2500);
+            setStatus(t("stRemovedSel", sel), "ok", 2500);
         })
-        .catch((e) => setStatus(e.message ?? "Error", "error", 4000));
+        .catch((e) => setStatus(e.message ?? t("stError"), "error", 4000));
 }
 
 filterAddBtn.addEventListener("click", addFilter);
@@ -554,71 +560,63 @@ filterInput.addEventListener("input", updatePreview);
 filterParentCb.addEventListener("change", updatePreview);
 
 clearDomainBtn.addEventListener("click", () => {
-    const ok = confirm(
-        "Clear all per-host (domain) user filters?\n\n" +
-        "Host-scoped selectors you collected via DOM-killer will be removed " +
-        "from this browser. Global, bundled and EasyList filters are not affected."
-    );
+    const ok = confirm(t("confirmClearDomain"));
     if (!ok) return;
-    setStatus("Clearing…");
+    setStatus(t("stClearing"));
     sendMessage({ action: "clearDomainFilters" })
         .then((res) => {
             const n = res?.selectorCount ?? 0;
             const h = res?.hostCount ?? 0;
             setStatus(
                 n === 0
-                    ? "No domain filters to clear"
-                    : `Cleared ${n} selectors across ${h} hosts`,
+                    ? t("stNoDomainFilters")
+                    : t("stClearedDomain", n, h),
                 "ok",
                 4000
             );
             refreshFilterList();
         })
-        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+        .catch((e) => setStatus(e.message ?? t("stError"), "error", 5000));
 });
 
 clearGlobalBtn.addEventListener("click", () => {
-    const ok = confirm(
-        "Clear all global user filters?\n\n" +
-        "Selectors that apply to all hosts will be removed from this " +
-        "browser. Domain, bundled and EasyList filters are not affected."
-    );
+    const ok = confirm(t("confirmClearGlobal"));
     if (!ok) return;
-    setStatus("Clearing…");
+    setStatus(t("stClearing"));
     sendMessage({ action: "clearGlobalFilters" })
         .then((res) => {
             const n = res?.selectorCount ?? 0;
             setStatus(
                 n === 0
-                    ? "No global filters to clear"
-                    : `Cleared ${n} global selectors`,
+                    ? t("stNoGlobalFilters")
+                    : t("stClearedGlobal", n),
                 "ok",
                 4000
             );
             refreshFilterList();
         })
-        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+        .catch((e) => setStatus(e.message ?? t("stError"), "error", 5000));
 });
 
 exportBtn.addEventListener("click", () => {
-    setStatus("Exporting…");
+    setStatus(t("stExporting"));
     sendMessage({ action: "exportFilters" })
         .then((res) => {
             const n = res?.selectorCount ?? 0;
             const h = res?.hostCount ?? 0;
             if (n === 0) {
-                setStatus("No user filters to export", "ok", 3000);
+                setStatus(t("stNoExport"), "ok", 3000);
             } else {
-                setStatus(`Exported ${n} selectors across ${h} hosts`, "ok", 4000);
+                setStatus(t("stExported", n, h), "ok", 4000);
             }
         })
-        .catch((e) => setStatus(e.message ?? "Error", "error", 5000));
+        .catch((e) => setStatus(e.message ?? t("stError"), "error", 5000));
 });
 
 chrome.runtime.onMessage.addListener((msg) => {
     if (msg?.action !== "domKillerEnded") return false;
     stopCapturing();
-    setStatus("Manual removal stopped", "ok", 3000);
+    setStatus(t("stManualRemovalStopped"), "ok", 3000);
     return false;
 });
 
@@ -668,6 +666,6 @@ sendMessage({ action: "getViewportSize" })
 // elementCaptureResult listener above will then call stopCapturing().
 chrome.storage.session.get("elementCaptureInProgress", (data) => {
     if (data?.elementCaptureInProgress) {
-        showCapturing("Capturing element…");
+        showCapturing(t("ovCapturingElement"));
     }
 });
