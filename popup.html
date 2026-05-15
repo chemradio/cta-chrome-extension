@@ -180,10 +180,18 @@
                         <div class="radio-group" id="layout-group">
                             <input
                                 type="radio"
+                                id="user"
+                                name="layout"
+                                value="user"
+                                checked
+                            />
+                            <label for="user">User</label>
+
+                            <input
+                                type="radio"
                                 id="fullpage"
                                 name="layout"
                                 value="fullpage"
-                                checked
                             />
                             <label for="fullpage">Full Page</label>
 
@@ -197,11 +205,11 @@
 
                             <input
                                 type="radio"
-                                id="horizontal"
+                                id="fullhd"
                                 name="layout"
-                                value="horizontal"
+                                value="fullhd"
                             />
-                            <label for="horizontal">Horizontal</label>
+                            <label for="fullhd">FullHD</label>
 
                             <input
                                 type="radio"
@@ -227,7 +235,7 @@
                                 id="width"
                                 placeholder="Width"
                                 min="300"
-                                max="9999"
+                                max="16384"
                                 value="1920"
                             />
                             <span class="resolution-x">×</span>
@@ -236,7 +244,7 @@
                                 id="height"
                                 placeholder="Height"
                                 min="300"
-                                max="9999"
+                                max="16384"
                                 value="7000"
                             />
                             <span class="resolution-px">px</span>
@@ -429,14 +437,20 @@
                         </p>
                         <ul>
                             <li>
-                                <b>Full Page</b> — 1920 wide, full document
-                                height (measured live).
+                                <b>User</b> — the current tab's viewport size
+                                (default). Combined with the 2× quality
+                                multiplier, gives you a sharp shot at the
+                                exact size you see in the browser.
                             </li>
                             <li>
-                                <b>Vertical</b> — 1920 × 7000, good for long
-                                social posts.
+                                <b>Full Page</b> — viewport width, full
+                                document height (measured live).
                             </li>
-                            <li><b>Horizontal</b> — 1920 × 1080.</li>
+                            <li>
+                                <b>Vertical</b> — viewport width × (width × 3.5),
+                                good for long social posts.
+                            </li>
+                            <li><b>FullHD</b> — 1920 × 1080.</li>
                             <li><b>4K</b> — 3840 × 2160.</li>
                             <li><b>Custom</b> — your own width × height.</li>
                         </ul>

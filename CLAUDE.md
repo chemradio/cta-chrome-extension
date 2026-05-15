@@ -18,16 +18,18 @@ All captures are triggered from the **toolbar popup** ([popup.html](popup.html) 
 
 User picks a resolution preset and scale factor. The extension attaches the debugger, emulates the chosen device metrics, waits for the page to settle (MutationObserver-based), captures, and detaches.
 
-Resolution presets in the popup ([popup.js:6-11](popup.js#L6-L11)):
+Resolution presets in the popup ([popup.js](popup.js)):
 
-| Preset    | Width | Height                            |
-|-----------|-------|-----------------------------------|
-| Horizontal | 1920 | 1080                              |
-| Vertical   | 1920 | 7000                              |
-| Full Page  | 1920 | measured from the live document   |
-| Custom     | user-editable | user-editable             |
+| Preset         | Width            | Height                          |
+|----------------|------------------|---------------------------------|
+| User (default) | tab `innerWidth` | tab `innerHeight`               |
+| Full Page      | tab `innerWidth` | measured from the live document |
+| Vertical       | tab `innerWidth` | `width × 3.5`                   |
+| FullHD         | 1920             | 1080                            |
+| 4K             | 3840             | 2160                            |
+| Custom         | user-editable    | user-editable                   |
 
-Editing either resolution input auto-switches the radio to **Custom**.
+The User / Full Page / Vertical presets size to the active tab's viewport (CSS pixels at the user's current zoom — what they actually see). The popup fetches this on open via the `getViewportSize` action in [backgroundScript.js](backgroundScript.js), which runs `chrome.scripting.executeScript` against the tab and returns `{innerWidth, innerHeight}`. Until the message resolves (or on restricted URLs like `chrome://` where scripting is blocked) the popup falls back to its own `window.screen.{width,height}` so inputs are never blank. Editing either input on any preset other than Full Page auto-switches the radio to **Custom**.
 
 Scale factor (`deviceScaleFactor`): 1× / 2× / 3× / 4×. Default **2×**.
 

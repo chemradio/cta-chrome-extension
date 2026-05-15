@@ -6,13 +6,29 @@ const popupEl        = document.querySelector(".popup");
 const captureLabelEl = document.getElementById("capture-label");
 const captureHintEl  = document.getElementById("capture-hint");
 
+// "User" / "Full Page" / "Vertical" presets size to the active tab's viewport
+// (CSS pixels at the user's current zoom — what they actually see). The
+// background fetches it from the tab on popup open; until that resolves, fall
+// back to the popup's own screen dimensions so the UI never shows blank inputs.
+let viewportWidth  = window.screen.width;
+let viewportHeight = window.screen.height;
+
 const presets = {
-    horizontal: { width: 1920, height: 1080 },
+    user:         { width: viewportWidth, height: viewportHeight },
+    fullpage:     { width: viewportWidth, height: null },
+    vertical:     { width: viewportWidth, height: Math.round(viewportWidth * 3.5) },
+    fullhd:       { width: 1920, height: 1080 },
     horizontal4k: { width: 3840, height: 2160 },
-    vertical:   { width: 1920, height: 7000 },
-    fullpage:   { width: 1920, height: null },
-    custom:     null,
+    custom:       null,
 };
+
+function recomputeViewportPresets() {
+    presets.user.width      = viewportWidth;
+    presets.user.height     = viewportHeight;
+    presets.fullpage.width  = viewportWidth;
+    presets.vertical.width  = viewportWidth;
+    presets.vertical.height = Math.round(viewportWidth * 3.5);
+}
 
 // ─── Capture overlay ──────────────────────────────────────────────────────────
 
@@ -61,16 +77,16 @@ function updateResolutionInputs() {
     if (layout === "fullpage") {
         widthInput.disabled  = true;
         heightInput.disabled = true;
-        widthInput.value     = 1920;
+        widthInput.value     = viewportWidth;
         heightInput.value    = "";
         setStatus("Measuring page height…");
         chrome.runtime.sendMessage({ action: "getPageHeight" }, (response) => {
             if (chrome.runtime.lastError || !response || response.ok === false) {
-                heightInput.value = 9999;
+                heightInput.value = 16000;
                 setStatus("Could not measure page height", "error", 3000);
                 return;
             }
-            heightInput.value = Math.min(response.pageHeight ?? 9999, 9999);
+            heightInput.value = Math.min(response.pageHeight ?? 16000, 16000);
             setStatus("");
         });
         return;
@@ -597,7 +613,37 @@ layoutInputs.forEach((input) =>
 widthInput.addEventListener("input",  checkCustomResolution);
 heightInput.addEventListener("input", checkCustomResolution);
 
+// Persist the user's scale-factor choice across popup opens. Default stays 2×
+// (set via `checked` in popup.html); a stored value just overrides the default.
+chrome.storage.local.get("scaleFactor").then(({ scaleFactor }) => {
+    if (scaleFactor) {
+        const radio = document.querySelector(`input[name="scale"][value="${scaleFactor}"]`);
+        if (radio) radio.checked = true;
+    }
+});
+for (const s of document.getElementsByName("scale")) {
+    s.addEventListener("change", () => {
+        if (s.checked) chrome.storage.local.set({ scaleFactor: parseInt(s.value) });
+    });
+}
+
 updateResolutionInputs();
+
+// Pull the active tab's viewport size and refresh the user/fullpage/vertical
+// presets. Best-effort: on restricted URLs (chrome://, store) the background
+// returns nulls and we keep the screen-based fallback computed at module load.
+sendMessage({ action: "getViewportSize" })
+    .then((res) => {
+        if (!res?.width || !res?.height) return;
+        viewportWidth  = res.width;
+        viewportHeight = res.height;
+        recomputeViewportPresets();
+        const layout = getSelectedLayout();
+        if (layout === "user" || layout === "fullpage" || layout === "vertical") {
+            updateResolutionInputs();
+        }
+    })
+    .catch(() => { /* keep fallback */ });
 
 // If the popup was re-opened by the element-click handoff, show the
 // "Capturing…" overlay immediately. The session flag is set in

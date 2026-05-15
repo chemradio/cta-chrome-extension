@@ -253,6 +253,18 @@ async function handleAction(request) {
             return { pageHeight };
         }
 
+        case "getViewportSize": {
+            if (isRestrictedUrl(tab.url)) return { width: null, height: null };
+            const [{ result } = {}] = await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => ({
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                }),
+            });
+            return { width: result?.width ?? null, height: result?.height ?? null };
+        }
+
         case "capturePage": {
             const zoom = await chrome.tabs.getZoom(tab.id).catch(() => 1);
             // Honor the user's browser zoom: emulate a CSS viewport narrower
@@ -371,6 +383,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // without channel-conflict warnings.
     const owned = new Set([
         "getPageHeight",
+        "getViewportSize",
         "capturePage",
         "captureElement",
         "manualCleanup",
