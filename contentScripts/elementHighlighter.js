@@ -22,6 +22,11 @@
     // doesn't need to hold the mouse perfectly still while scrolling the tree.
     const SCROLL_LOCK_MS     = 400;
 
+    // Remembers, per parent element, which child the user ascended from — so a
+    // later wheel-down returns to that child instead of always firstElementChild.
+    // Lets the user overshoot upward and walk back down the same branch.
+    const descentMemory = new WeakMap();
+
     let lastCommittedX   = -9999;
     let lastCommittedY   = -9999;
     let pendingX         = 0;
@@ -140,15 +145,21 @@
         }, SCROLL_LOCK_MS);
 
         if (e.deltaY < 0) {
-            // Scroll up → parent element
+            // Scroll up → parent element. Remember which child we came from so
+            // a later scroll-down can return to it.
             const parent = currentElement.parentElement;
             if (parent && parent !== document.documentElement) {
+                descentMemory.set(parent, currentElement);
                 highlight(parent);
             }
         } else {
-            // Scroll down → first child element
-            const firstChild = currentElement.firstElementChild;
-            if (firstChild) highlight(firstChild);
+            // Scroll down → previously-ascended child if it's still a direct
+            // child, otherwise the first child element.
+            const remembered = descentMemory.get(currentElement);
+            const target = (remembered && remembered.parentElement === currentElement)
+                ? remembered
+                : currentElement.firstElementChild;
+            if (target) highlight(target);
         }
     }
 

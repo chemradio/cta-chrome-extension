@@ -24,6 +24,11 @@
     let isScrollLocked     = false;
     let originalWindowOpen = null;
 
+    // Remembers, per parent element, which child the user ascended from — so a
+    // later wheel-down returns to that child instead of always firstElementChild.
+    // Lets the user overshoot upward and walk back down the same branch.
+    const descentMemory = new WeakMap();
+
     // ─── Styles ───────────────────────────────────────────────────────────────
 
     if (!document.getElementById(STYLE_ID)) {
@@ -123,10 +128,16 @@
 
         if (e.deltaY < 0) {
             const parent = currentElement.parentElement;
-            if (parent && parent !== document.documentElement) highlight(parent);
+            if (parent && parent !== document.documentElement) {
+                descentMemory.set(parent, currentElement);
+                highlight(parent);
+            }
         } else {
-            const firstChild = currentElement.firstElementChild;
-            if (firstChild) highlight(firstChild);
+            const remembered = descentMemory.get(currentElement);
+            const target = (remembered && remembered.parentElement === currentElement)
+                ? remembered
+                : currentElement.firstElementChild;
+            if (target) highlight(target);
         }
     }
 
