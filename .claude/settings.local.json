@@ -8,7 +8,10 @@
       "Read(///bishkeknas03/CurrentTimeAsia/GRAPHICS/Timur Edit/**)",
       "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('_locales/en/messages.json','utf8'\\)\\);JSON.parse\\(require\\('fs'\\).readFileSync\\('_locales/ru/messages.json','utf8'\\)\\);JSON.parse\\(require\\('fs'\\).readFileSync\\('manifest.json','utf8'\\)\\);console.log\\('JSON OK'\\)\")",
       "PowerShell(\"_locales/en/messages.json\",\"_locales/ru/messages.json\",\"manifest.json\" | ForEach-Object { try { Get-Content $_ -Raw | ConvertFrom-Json | Out-Null; \"$_ OK\" } catch { \"$_ FAILED: $_\" } })",
-      "PowerShell(\"ru OK\")"
+      "PowerShell(\"ru OK\")",
+      "Bash(ls -R \"\\\\\\\\\\\\\\\\bishkeknas03\\\\\\\\CurrentTimeAsia\\\\\\\\GRAPHICS\\\\\\\\Timur Edit\\\\\\\\cta-chrome-extension\" 2>nul | head -120)",
+      "Bash(head -40 \"\\\\\\\\\\\\\\\\bishkeknas03\\\\\\\\CurrentTimeAsia\\\\\\\\GRAPHICS\\\\\\\\Timur Edit\\\\\\\\cta-chrome-extension\\\\\\\\contentScripts\\\\\\\\domKiller.js\")",
+      "Read(///bishkeknas03/CurrentTimeAsia/GRAPHICS/Timur Edit/cta-chrome-extension/contentScripts/**)"
     ]
   }
 }

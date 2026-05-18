@@ -1,79 +1,97 @@
-# Sharpshooter Extension for Chrome
+# Sharpshooter
 
-Chrome extension for capturing high-resolution, clean screenshots of web pages and individual elements. Built for MotionGFX / asset creation.
+Chrome MV3 extension for high-resolution, clean screenshots of web pages and
+individual elements. Built for MotionGFX, archiving, and general asset creation.
+All capture uses the Chrome DevTools Protocol (`chrome.debugger`) for device
+emulation + `Page.captureScreenshot`.
 
-## Features
-
-- **Full page screenshots** — captures the entire page at any resolution with configurable device scale (1x–4x)
-- **Element screenshots** — interactively select any DOM element; hover to highlight, scroll wheel to traverse the tree, click to capture
-- **Page cleanup** — removes ads, navigation bars, popups, and UI chrome before capture (Facebook, Instagram, Telegram, X, VK)
-- **Device emulation** — sets exact viewport dimensions via Chrome DevTools Protocol so the page renders at precisely the resolution you need
-- **Context menu** — right-click shortcuts for common presets
+> The popup has a built-in **?** help panel — this README is the high-level
+> overview; the help panel covers day-to-day usage.
 
 ## Installation
 
-1. Clone or download this repo
-2. Go to `chrome://extensions/`
-3. Enable **Developer Mode** (top-right toggle)
-4. Click **Load unpacked** and select the extension folder
+1. Clone or download this repo.
+2. Go to `chrome://extensions/`.
+3. Enable **Developer Mode** (top-right toggle).
+4. Click **Load unpacked** and select the extension folder.
 
-## Usage
+## Capture modes
 
-### Popup controls
+All captures start from the toolbar popup.
 
-**Layout & Resolution**
+- **Capture this post / story** — appears at the top of the popup only when the
+  active tab is a single post or story on a supported social site. One click
+  cleans up the page and captures just that post/story element.
+- **Auto Capture** — one-click full-page capture: removes ads, runs per-host
+  cleanup, then captures the full page at the selected scale.
+- **Page Capture** — captures the page at a chosen resolution preset and scale.
+- **Capture Element** — interactively pick any DOM element: hover to highlight
+  (cyan glow), scroll wheel to walk the DOM tree (up = parent, down = child),
+  click to capture.
 
-- `Horizontal` — 1920×1080
-- `Vertical` — 1920×7000
-- `Full Page` — 1920 × auto-detected page height (up to 9999px)
-- `Custom` — enter any dimensions (300–9999px)
+PNGs download as `page-…` / `element-…` named with the domain and a timestamp.
 
-**Scale Factor** — 1x / 2x / 3x / 4x maps to `deviceScaleFactor` in Chrome emulation. 2x is standard "retina" quality.
+## Resolution presets (Page Capture)
 
-**Cleanup** — when checked, runs site-specific cleanup (removes nav bars, sidebars, comment UI, etc.) before the screenshot is taken.
+| Preset    | Width            | Height                          |
+| --------- | ---------------- | ------------------------------- |
+| User      | tab viewport     | tab viewport                    |
+| Full Page | tab viewport     | measured live page height       |
+| Vertical  | tab viewport     | width × 3.5                     |
+| FullHD    | 1920             | 1080                            |
+| 4K        | 3840             | 2160                            |
+| Custom    | user-editable    | user-editable                   |
 
-### Capture Page
+**Quality multiplier** — 1× / 2× / 3× / 4× (`deviceScaleFactor`); default 2×.
+Max output is 16384 px per side (CDP limit).
 
-Takes a full-page screenshot at the configured resolution and scale. Downloads as `page-{domain}-{timestamp}.png`.
+## Supported social sites
 
-### Capture Single Element
+| Site            | Post | Story | Notes                          |
+| --------------- | :--: | :---: | ------------------------------ |
+| Facebook        |  ✓   |   ✓   | also detects group posts       |
+| Instagram       |  ✓   |   ✓   |                                |
+| X / Twitter     |  ✓   |       |                                |
+| Telegram (t.me) |  ✓   |       |                                |
+| VK              |  ✓   |       |                                |
 
-1. Click **Capture Single Element** — the cursor changes and elements glow cyan on hover
-2. Hover over the element you want
-3. Use the **scroll wheel** to move up (parent) or down (first child) in the DOM tree
-4. **Click** to capture — downloads as `element-{domain}-{timestamp}.png`
+The "Capture this post/story" prompt only shows when the URL looks like a
+single post/story page. Feed and profile pages fall through to Auto / Page
+Capture.
 
-### Manual Cleanup
+## Helpers
 
-Runs the cleanup script for the current site without taking a screenshot. Useful for previewing what gets removed.
+- **Cleanup** — runs the cleanup pipeline (ad removal + per-host framing
+  cleanup) on the current page without capturing.
+- **Remove Elements** — interactive click-to-remove tool. Hover + scroll wheel
+  to target, click to delete an element; **Ctrl/Cmd+Z** undoes the last
+  removal. Each removal is also saved as a reusable selector for that host.
 
-### Context menu
+## Expert mode
 
-Right-click anywhere on a page:
+Toggle **Expert** in the header to manage filters:
 
-- **Element Screenshot** — starts element selection (same as popup button, uses 1920×1080 @ 2x)
-- **Screenshot: FullHD x2** — full page at 1920×1080 @ 2x
-- **Screenshot: Vertical 5k x2 / x4** — full page at 1920×5000
-- **Screenshot: Vertical 7k x2** — full page at 1920×7000
-- **Screenshot: Maps 4k_4k x2** — full page at 4000×4000 @ 2x
+- Add / remove user filter selectors, per-host or global.
+- Export collected filters as JSON, clear domain or global filters.
+- Disable the bundled filter list; optionally re-encode captures as opaque PNG.
 
-## Supported cleanup sites
+## Cleanup & ad removal
 
-| Site            | What's removed                                                |
-| --------------- | ------------------------------------------------------------- |
-| facebook.com    | Top navigation banner, sticky wrappers, voice comment toolbar |
-| instagram.com   | Comment sidebar panel, "comment as" section                   |
-| t.me (Telegram) | Avatar, bubble tail, border/padding from message widget       |
-| x.com           | Trending sidebar, account menu, floating sidebar panels       |
+Cleanup merges three filter tiers — upstream **EasyList**, a **bundled**
+curated list shipped with the extension, and **user** selectors collected via
+Remove Elements — and applies them as CSS-selector node removal, plus a small
+hand-curated per-host pass for screenshot framing.
+
+MV3-safe: only filter *lists* (CSS selectors / URL patterns) are fetched at
+runtime — never remote JavaScript.
 
 ## How it works
 
-The extension uses Chrome's DevTools Protocol (CDP) via `chrome.debugger`:
+1. Attach `chrome.debugger` to the active tab.
+2. Emulate device metrics (`Emulation.setDeviceMetricsOverride`).
+3. Wait for the page to settle (MutationObserver-based).
+4. Capture with `Page.captureScreenshot`.
+5. Detach and download the PNG. Element captures are cropped from the
+   viewport shot in JS (`OffscreenCanvas`) for accuracy.
 
-1. Attach debugger to the active tab
-2. Set viewport with `Emulation.setDeviceMetricsOverride` (width, height, deviceScaleFactor)
-3. Wait for the page to re-render and settle (MutationObserver with 800ms debounce)
-4. Capture with `Page.captureScreenshot`
-5. Detach debugger and download the PNG
-
-For element captures, the element's position is re-measured after emulation (viewport change shifts layout), then passed as a clip region to `Page.captureScreenshot`.
+See [CLAUDE.md](CLAUDE.md) for the full architecture reference.

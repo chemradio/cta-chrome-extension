@@ -8,7 +8,7 @@ This document describes the current implementation. Aspirational features are sp
 
 ## Entry points
 
-All captures are triggered from the **toolbar popup** ([popup.html](popup.html) / [popup.js](popup.js)) — main UI with resolution, scale, cleanup options, and three action buttons: **Capture Page**, **Capture Element**, and **Auto**. When opened on a supported site (Facebook, Instagram, Telegram, X, VK) the popup also runs a non-destructive site-detection pass and surfaces a "Capture this <post/story>" button at the top if a target is recognized.
+All captures are triggered from the **toolbar popup** ([popup.html](popup.html) / [popup.js](popup.js)) — main UI with quality multiplier (scale), resolution presets, and the capture buttons: **Auto Capture**, **Page Capture**, and **Capture Element**. A **Helpers** row holds **Remove Elements** (interactive DOM killer) and **Cleanup**. When opened on a supported site (Facebook, Instagram, Telegram, X, VK) the popup also runs a non-destructive site-detection pass and surfaces a "Capture this <post/story>" button at the top if a target is recognized. A header **?** button opens an in-popup help panel, and an **Expert** toggle reveals the filter-management UI.
 
 ---
 
@@ -80,7 +80,7 @@ Site modules do not touch `document.body.style.zoom` — captures leave the user
 
 ## Cleanup
 
-Unified cleanup pipeline. The popup's **Manual** button and the "Cleanup before capture" checkbox both invoke `runCleanup(tabId)` in [backgroundScript.js](backgroundScript.js), which runs three steps in order:
+Unified cleanup pipeline. The popup's **Cleanup** helper button invokes `runCleanup(tabId)` in [backgroundScript.js](backgroundScript.js), which runs three steps in order:
 
 1. `refreshIfStale()` — lazy-hydrate EasyList if missing or stale.
 2. Inject [contentScripts/adRemover.js](contentScripts/adRemover.js) — apply EasyList global + domain selectors **plus** user-collected DOM-killer selectors for the current hostname.
@@ -109,9 +109,9 @@ Pipeline:
 4. **Lazy refresh** ([adRemover/refreshFilters.js](adRemover/refreshFilters.js)) — `refreshIfStale()` re-fetches if the cached copy is missing or older than 7 days. Called at the start of `runCleanup` so first use after install works even before the startup fetch finishes.
 5. **Apply** ([contentScripts/adRemover.js](contentScripts/adRemover.js)) — matches the current hostname (suffix match — `news.example.com` picks up `example.com`) against both EasyList `adFilters.domains` and `userFilters`, unions with `adFilters.global`, applies in batches of 500 via `document.querySelectorAll(chunk.join(","))`. If a batch throws (one invalid selector), falls back to one-at-a-time within that batch — fast path stays fast.
 
-**User filters (`userFilters`)** — a `{[hostname]: [selector, …]}` map written by [contentScripts/domKiller.js](contentScripts/domKiller.js) every time the user click-removes an element. Selectors are short and generalizing: prefers `data-testid` / `aria-label` / stable `id`, falls back to `tag.class1.class2`. The intent is to build a personal local filter list that augments EasyList over time.
+**User filters (`userFilters` / `userGlobalFilters`)** — written by [contentScripts/domKiller.js](contentScripts/domKiller.js), the interactive **Remove Elements** tool. The user clicks the button, hovers elements (red highlight), walks the DOM with the scroll wheel, and clicks to delete; **Ctrl/Cmd+Z** pops the last removal off an undo stack and reinserts the node. Each removal is also saved as a short, generalizing selector — prefers `data-testid` / `aria-label` / stable `id`, falls back to `tag.class1.class2` — into a per-host `{[hostname]: [selector, …]}` map (`userFilters`), or into a flat all-hosts list (`userGlobalFilters`). The intent is to build a personal local filter list that augments EasyList over time. Filters can also be added/removed by hand in **Expert mode** (per-host or global scope).
 
-**Export (expert-only)** — triple-click the popup header title to reveal an "Export Filters" button. It downloads `userFilters-<timestamp>.json` in the bundled-file shape (`{global, domains}`) via `chrome.downloads`. Workflow: end user emails the dev → dev merges the `domains` entries into [filters/bundledFilters.json](filters/bundledFilters.json) → next extension update propagates the additions to everyone via `loadBundledFilters()` in [backgroundScript.js](backgroundScript.js).
+**Export (Expert mode)** — toggle **Expert** in the header, then use **Export Filters**. It downloads `userFilters-<timestamp>.json` in the bundled-file shape (`{global, domains}`) via `chrome.downloads`. Expert mode also exposes Clear Domain / Clear Global filters, a "disable bundled filters" switch, and a "re-encode PNG opaque" output option. Workflow: end user emails the dev → dev merges the `domains` entries into [filters/bundledFilters.json](filters/bundledFilters.json) → next extension update propagates the additions to everyone via `loadBundledFilters()` in [backgroundScript.js](backgroundScript.js).
 
 Why it stays MV3-safe: the network fetches return *text*, never JS. Parsing happens in the bundled-with-the-extension parser; only CSS selectors are evaluated, and `querySelectorAll` is not code execution. No `eval`, no `Function()`, no remotely-hosted script tags.
 
@@ -121,7 +121,7 @@ Cleanup vs. AdRemover: Cleanup is a small per-host hand-curated list for screens
 
 ## Architecture notes
 
-- **Service worker:** [backgroundScript.js](backgroundScript.js). Owns a specific set of message actions (`getPageHeight`, `capturePage`, `captureElement`, `manualCleanup`, `autoCapture`, `domKiller`) and always responds with `{ok: true, ...}` or `{ok: false, error}`. Other listeners (the element-click handler in [screenshots/elementSelect/elementClickListener.js](screenshots/elementSelect/elementClickListener.js)) own their own actions to avoid channel conflicts.
+- **Service worker:** [backgroundScript.js](backgroundScript.js). Owns a specific set of message actions (`getPageHeight`, `getViewportSize`, `capturePage`, `captureElement`, `manualCleanup`, `autoCapture`, `detectSite`, `captureSiteElement`, `domKiller`, and the filter actions `exportFilters` / `clearDomainFilters` / `clearGlobalFilters` / `listUserFilters` / `addUserFilter` / `removeUserFilter`) and always responds with `{ok: true, ...}` or `{ok: false, error}`. Other listeners (the element-click handler in [screenshots/elementSelect/elementClickListener.js](screenshots/elementSelect/elementClickListener.js)) own their own actions to avoid channel conflicts.
 - **Debugger lifecycle:** [support/debugerAttachment.js](support/debugerAttachment.js). Idempotent attach/detach tracked in a `Set`. Auto-recovers from "already attached" via detach+retry. Hooks `chrome.debugger.onDetach` to clear stale state.
 - **Mutation settle:** [support/mutationObserver.js](support/mutationObserver.js) + [contentScripts/mutationWatcher.js](contentScripts/mutationWatcher.js). Watcher disconnects any prior watcher via `window.__MutationCleanup` so re-injection doesn't leak observers. The waiter is tab-filtered and has an 8 s timeout fallback — never hangs the worker forever.
 - **Shared capture flow:** [screenshots/captureSession.js](screenshots/captureSession.js) exposes `withEmulatedCapture(tabId, deviceMetrics, body)` which handles attach → hide scrollbars → inject watcher → emulate → settle → run body → restore → detach. Used by both page and element capture. The `finally` guarantees teardown even on error.
@@ -140,9 +140,6 @@ Cleanup vs. AdRemover: Cleanup is a small per-host hand-curated list for screens
 ## Planned (not implemented)
 
 These were in the original spec but do not exist in the codebase. Listed here so future work has a clear target.
-
-### 4K horizontal preset
-A 3840×2160 preset for the popup. One-line addition to `presets` in [popup.js:6-11](popup.js#L6-L11) plus a matching radio in [popup.html](popup.html).
 
 ### Personal & sensitive data remover
 Hides the logged-in user's avatar and name in comment sections on social sites. Per-site selectors; bundled, not remote.
