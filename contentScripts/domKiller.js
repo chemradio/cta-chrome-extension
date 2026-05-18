@@ -29,6 +29,11 @@
     // Lets the user overshoot upward and walk back down the same branch.
     const descentMemory = new WeakMap();
 
+    // Undo stack of removed nodes. Each entry keeps enough to splice the node
+    // back into its original position: {node, parent, nextSibling}. Ctrl+Z /
+    // Cmd+Z pops the last removal and reinserts it.
+    const removalHistory = [];
+
     // ─── Styles ───────────────────────────────────────────────────────────────
 
     if (!document.getElementById(STYLE_ID)) {
@@ -76,7 +81,7 @@
     if (!document.getElementById(BANNER_ID)) {
         const banner = document.createElement("div");
         banner.id = BANNER_ID;
-        banner.textContent = "Manual element removal — Hover to target · Click to remove · Wheel to change depth · ESC to stop";
+        banner.textContent = "Manual element removal — Hover to target · Click to remove · Wheel to change depth · Ctrl/Cmd+Z to undo · ESC to stop";
         document.documentElement.appendChild(banner);
     }
 
@@ -177,7 +182,31 @@
         // the generalized selector often matched different nodes on re-apply
         // than what the user removed by hand. Will be redesigned separately.
 
+        // Record position before detaching so Ctrl/Cmd+Z can splice it back.
+        removalHistory.push({
+            node: target,
+            parent: target.parentNode,
+            nextSibling: target.nextSibling,
+        });
+
         target.remove();
+    }
+
+    // ─── Undo ─────────────────────────────────────────────────────────────────
+
+    function undoRemoval() {
+        const entry = removalHistory.pop();
+        if (!entry) return;
+
+        const { node, parent, nextSibling } = entry;
+        if (!parent) return;
+
+        // The original nextSibling may itself have been removed since; if it's
+        // no longer a child of parent, fall back to appending at the end.
+        const ref = nextSibling && nextSibling.parentNode === parent
+            ? nextSibling
+            : null;
+        parent.insertBefore(node, ref);
     }
 
     // ─── Selector capture ─────────────────────────────────────────────────────
@@ -251,6 +280,16 @@
         if (e.key === "Escape") {
             destroy();
             chrome.runtime.sendMessage({ action: "domKillerEnded" });
+            return;
+        }
+
+        // Ctrl+Z (Win/Linux) / Cmd+Z (Mac) — reinsert the last removed element.
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey &&
+            (e.key === "z" || e.key === "Z")) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            undoRemoval();
         }
     }
 
