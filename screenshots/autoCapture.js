@@ -56,7 +56,7 @@ const SITE_URL_PATTERNS = {
     ],
     instagram: [
         /\/(?:p|reel|tv)\/[^/?#]+/,
-        /\/stories\/[^/]+\/[^/?#]+/,
+        /\/stories\//,
     ],
     telegram: [
         // t.me/<channel>/<numeric-post-id> — channel landings have no /<n>.
@@ -228,15 +228,22 @@ export async function captureSiteElement({ tabId, url, settings, screenshotSuffi
         throw new Error("No element target detected on this page");
     }
 
+    // A site module may attach a `viewport` hint to its element plan when
+    // the default 1920×7000 capture frame is wrong for the target (e.g. a
+    // fixed-aspect Instagram story card). The element pipeline still
+    // auto-expands the viewport if the element exceeds it.
+    const deviceMetrics = {
+        width: 1920,
+        height: 7000,
+        deviceScaleFactor: scale,
+        mobile: false,
+        ...(plan.viewport ?? {}),
+    };
+
     await captureElement({
         tabId,
         xpath: plan.xpath,
-        deviceMetrics: {
-            width: 1920,
-            height: 7000,
-            deviceScaleFactor: scale,
-            mobile: false,
-        },
+        deviceMetrics,
         screenshotSuffix: `${moduleName}-${screenshotSuffix}`,
     });
     return { mode: "element", module: moduleName };
